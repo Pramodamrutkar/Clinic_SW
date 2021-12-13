@@ -1,0 +1,21 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "CreditLinks API",
+        "version": "0.1"
+    },
+    "paths": {
+        "/hello-world": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Display a listing of projects."
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        []
+    ]
+}
