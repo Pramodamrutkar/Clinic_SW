@@ -19,9 +19,9 @@ class OtpController extends Controller
     public function sendOtp(Request $request)
     {       
        
-            $mobileNo = trim($request->mobile);
+            $mobileNo = trim($request->mobile_phone_number);
             $emailId = trim($request->email);
-            $phoneCode = trim($request->phonecode);
+            $phoneCode = trim($request->mobile_phone_code);
 
             $otp = rand(100000, 999999);
     
@@ -34,24 +34,23 @@ class OtpController extends Controller
                 $flag = $this->sendMessage($senderId, $mobileNo, $message,$phoneCode);
                 
                 if($flag == 0){
-                    
                     return ' { "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';	
                 }
                 
                 // $now = date("Y-m-d H:i:s");
-                
                 // $insert = new \App\OtpM;
                 // $insert->contact = $contact;
                 // $insert->otp = $otp;
                 // $insert->createdOn = $now;
                 // $insert->save();
-                
                 return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
             }else{
                 $messagePage = "mail"; // Create message in view.
                 $subject = "Your CreditLinks One-Time Password";
                 $this->sendEmail($messagePage,$emailId,$subject,$otp);
+                return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
             }   
+
         
     }
     
@@ -94,18 +93,14 @@ class OtpController extends Controller
         
         $data = array("otp"=>$otp, "toEmail" => $toEmail,"subject" => $subject,'attachment' => $attachment);
 
-        $sentEmail = Mail::send($messagePage, $data, function($message) use ($data){
+        Mail::send($messagePage, $data, function($message) use ($data){
             $message->to($data['toEmail'])->subject($data['subject']);
             $message->from('noreply@creditlinks.in','CreditLinks');
             if(!empty($data['attachment'])){
                 $message->attach($data['attachment']);
              }
         });
-        if($sentEmail){
-            return '{ "status":"success" , "message":"Email sent successfully" }';
-        }else{
-            return '{ "status":"fail" , "message":"Something went wrong" }';
-        }
+      
     }
 
 }

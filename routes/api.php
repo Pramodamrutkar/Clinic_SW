@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CreditProspectController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SmartListController;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::post('/credit-prospect',[CreditProspectController::class,'storeBasicDetails']);
 
 Route::post('/send-otp',[OtpController::class,'sendOtp']);
 Route::post('/save-smartlist', [SmartListController::class, 'store']);
