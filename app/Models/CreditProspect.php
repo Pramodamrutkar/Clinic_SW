@@ -10,8 +10,8 @@ class CreditProspect extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['issend_toemail','channel_id','email','mobile_phone_number','mobile_phone_code'];
-
+    //protected $fillable = ['issend_toemail','channel_id','email','mobile_phone_number','mobile_phone_code'];
+    protected $guarded = ['issend_toemail'];
     protected $table = "credit_prospect";
     
     protected $primaryKey = "user_id";

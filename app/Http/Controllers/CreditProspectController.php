@@ -19,8 +19,13 @@ class CreditProspectController extends Controller
     
         $request->validate([
             'issend_toemail' => 'required|boolean',
+            //'email' => 'required|string|unique:credit_prospect,email',
             'channel_id' => 'required|string',
         ]);
+        
+        //$request->credituid = (string) Str::uuid();
+        //return CreditProspect::create($request->all());
+
         $obj = new CreditProspect();
         $response = $obj->saveBasicsdetails($request);
         return $response; 

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::post('/credit-prospect',[CreditProspectController::class,'storeBasicDetails']);
+Route::post('/verifyotp',[OtpController::class,'verifyOtp']);
 
 Route::post('/send-otp',[OtpController::class,'sendOtp']);
 Route::post('/save-smartlist', [SmartListController::class, 'store']);

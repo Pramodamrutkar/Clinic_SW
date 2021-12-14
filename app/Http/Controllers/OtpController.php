@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Http\Requests;
-
+use App\Models\CreditProspect;
+use App\Models\Otp;
+use Illuminate\Support\Str;
 use Mail;
 
 class OtpController extends Controller
@@ -24,7 +26,7 @@ class OtpController extends Controller
             $phoneCode = trim($request->mobile_phone_code);
 
             $otp = rand(100000, 999999);
-    
+            $flag = 0;
             if(is_numeric($mobileNo)){
 
                 $application_name = config('constants.application_name');
@@ -34,24 +36,35 @@ class OtpController extends Controller
                 $flag = $this->sendMessage($senderId, $mobileNo, $message,$phoneCode);
                 
                 if($flag == 0){
-                    return ' { "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';	
+                    return '{ "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';	
+                }
+               
+            }else{
+                $messagePage = "mail"; // mail message in resources/views.
+                $subject = "Your CreditLinks One-Time Password";
+                $flag = $this->sendEmail($messagePage,$emailId,$subject,$otp);
+            }   
+                if(is_numeric($mobileNo)){
+                    $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->first(); 
+                }else{
+                    $creditProspectdata = CreditProspect::where('email', $emailId)->first(); 
                 }
                 
-                // $now = date("Y-m-d H:i:s");
-                // $insert = new \App\OtpM;
-                // $insert->contact = $contact;
-                // $insert->otp = $otp;
-                // $insert->createdOn = $now;
-                // $insert->save();
-                return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
-            }else{
-                $messagePage = "mail"; // Create message in view.
-                $subject = "Your CreditLinks One-Time Password";
-                $this->sendEmail($messagePage,$emailId,$subject,$otp);
-                return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
-            }   
-
-        
+                $otpInsert = new Otp();
+                $otpInsert->code = $otp;
+                $otpInsert->otpuid = (string) Str::uuid();
+                if($request->issend_toemail == 1){
+                    $otpInsert->communication_mode = "EMAIL";
+                    $otpInsert->device_locator = $emailId;	     
+                }else{
+                    $otpInsert->communication_mode = "PHONE";
+                    $otpInsert->device_locator = $mobileNo;	   
+                } 
+                $otpInsert->user_id = $creditProspectdata['user_id']; // primary key of credit prospect table.
+                $otpInsert->save();
+                if($flag == 1){
+                    return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
+                }
     }
     
     /**
@@ -103,4 +116,32 @@ class OtpController extends Controller
       
     }
 
+    /**
+     * @param \Illuminate\Http\Request $request
+     */
+    public function verifyOtp(Request $request){
+        $request->validate([
+            'otp' => 'required|integer'
+        ]);     
+    
+        $otp = trim($request->otp);
+
+        $checkOtp = Otp::where('used', 0)->where('code',$otp)->count();
+        
+        if($checkOtp > 0){
+            $usedOtp = Otp::where('code',$otp)->update(['used' => 1]);
+
+            return response([
+                'status' => 'success',
+                'message' => 'Verified Otp'
+            ], 200);
+        }else{
+            return response([
+                'status' => 'success',
+                'message' => 'Invalid Otp'
+            ], 200);
+        }
+    }
+
+    
 }

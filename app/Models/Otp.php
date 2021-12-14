@@ -8,5 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Otp extends Model
 {
     use HasFactory;
+    protected $table = "otp";
+    protected $primaryKey = "id";
+    public $timestamps = true;
     
 }
