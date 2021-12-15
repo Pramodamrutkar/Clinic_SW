@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CreditApp;
+use App\Models\CreditProspect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Http\Response;
 
-use App\Models\CreditProspect;
 
 
 class CreditProspectController extends Controller
@@ -29,7 +30,11 @@ class CreditProspectController extends Controller
         $obj = new CreditProspect();
         $response = $obj->saveBasicsdetails($request);
         return $response; 
-        
     }  
 
+    public function storePersonalInfoInCreditApp(Request $request){
+       $creditAppobj = new CreditApp();
+       $response = $creditAppobj->savePersonalInformationiInApp($request);
+       return $response;
+    }
 }

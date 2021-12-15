@@ -30,8 +30,21 @@ class CreditProspect extends Model
         }else{
             return false;
         }
-      
     }   
 
-
+    public function saveCreditProspectData($request){
+        
+        $creditProspectData = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->where('email',$request->email)->first();
+        $creditProspectData->first_name = $request['first_name'];
+        $creditProspectData->middle_name = $request['middle_name'];
+        $creditProspectData->last_name = $request['last_name'];
+        $creditProspectData->birth_date = $request['birth_date'];
+        $creditProspectData->tin = $request['tin'];
+        $creditProspectData->credit_amount = $request['credit_amount'];
+        if($creditProspectData->save()){
+            return $creditProspectData->credituid;	
+        }else{
+            return false;
+        }
+    }
 }

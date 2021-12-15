@@ -16,14 +16,21 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::post('/credit-prospect',[CreditProspectController::class,'storeBasicDetails']);
-Route::post('/verifyotp',[OtpController::class,'verifyOtp']);
 
+Route::post('/apply-loan',[CreditProspectController::class,'storeBasicDetails']);
+Route::post('/verifyotp',[OtpController::class,'authenticate']);    
 Route::post('/send-otp',[OtpController::class,'sendOtp']);
-Route::post('/save-smartlist', [SmartListController::class, 'store']);
-Route::get('/smartlist', [SmartListController::class, 'index']);
+
+//Route::group(['middleware' => ['jwt.verify']], function() {
+    Route::post('save-creditapp',[CreditProspectController::class,'storePersonalInfoInCreditApp']);
+    Route::post('/save-smartlist', [SmartListController::class, 'store']);
+    Route::get('/smartlist', [SmartListController::class, 'index']);
+//});
 
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+
+
+
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });

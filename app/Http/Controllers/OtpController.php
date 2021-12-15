@@ -9,10 +9,13 @@ use App\Models\CreditProspect;
 use App\Models\Otp;
 use Illuminate\Support\Str;
 use Mail;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use JWTAuth;
+use Illuminate\Support\Facades\Validator;
 
 class OtpController extends Controller
-{
-     /**
+{   
+    /**
      * send a otp to request mobile no or email.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -119,29 +122,51 @@ class OtpController extends Controller
     /**
      * @param \Illuminate\Http\Request $request
      */
-    public function verifyOtp(Request $request){
-        $request->validate([
-            'otp' => 'required|integer'
-        ]);     
-    
-        $otp = trim($request->otp);
+    public function authenticate(Request $request){
+      
+        $credentials = $request->only('code', 'device_locator');
 
-        $checkOtp = Otp::where('used', 0)->where('code',$otp)->count();
+        $otp = trim($request->code);
+        $deviceLocator = trim($request->device_locator);
+        $expiry = config('constants.otpexpire'); //defined in constants.php file
+      
+        //$expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
+        //->where('created_at', '>=', $expiryTime)
+        $checkOtp = Otp::where('device_locator',$deviceLocator)->where('used', 0)->where('code',$otp)->count();
         
         if($checkOtp > 0){
-            $usedOtp = Otp::where('code',$otp)->update(['used' => 1]);
+            Otp::where('code',$otp)->update(['used' => 1]);
+           
+            
+            //token generation
+            // try {
+            //     if (! $token = JWTAuth::attempt($credentials)) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => 'Login credentials are invalid.',
+            //         ], 400);
+            //     }
+            // } catch (JWTException $e) {
+            // return $credentials;
+            //     return response()->json([
+            //             'success' => false,
+            //             'message' => 'Could not create token.',
+            //         ], 500);
+            // }
 
             return response([
                 'status' => 'success',
                 'message' => 'Verified Otp'
             ], 200);
-        }else{
+
+
+        }
+        else{ 
             return response([
-                'status' => 'success',
+                'status' => 'fail',
                 'message' => 'Invalid Otp'
             ], 200);
         }
     }
-
     
 }
