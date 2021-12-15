@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/send-otp',[OtpController::class,'sendOtp']);
 Route::post('/save-smartlist', [SmartListController::class, 'store']);
 Route::get('/smartlist', [SmartListController::class, 'index']);
+Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
