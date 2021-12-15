@@ -6,7 +6,7 @@ use App\Models\SmartList;
 use App\Models\SmartListData;
 use App\Models\SmartListDataGroup;
 use Illuminate\Http\Request;
-use Illuminate\support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\Languages;
 
 class SmartListController extends Controller
