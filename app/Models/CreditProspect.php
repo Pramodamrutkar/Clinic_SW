@@ -19,17 +19,34 @@ class CreditProspect extends Model
     public $timestamps = true;
 
     public function saveBasicsdetails($request){
-        $this->credituid = (string) Str::uuid();
-        $this->channel_id = $request['channel_id'];
-        $this->email = $request['email'];
-        $this->mobile_phone_code = $request['mobile_phone_code'];
-        $this->mobile_phone_number = $request['mobile_phone_number'];
-        $this->role_id = 1;
-        if($this->save()){
-            return $this->user_id;
+        $creditProspectUpdate = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->where('email',$request->email)->first();
+      
+        if(!empty($creditProspectUpdate)){
+            $creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
+            $creditProspectUpdate->channel_id = $request['channel_id'];
+            $creditProspectUpdate->email = $request['email'];
+            $creditProspectUpdate->mobile_phone_code = $request['mobile_phone_code'];
+            $creditProspectUpdate->mobile_phone_number = $request['mobile_phone_number'];
+            $creditProspectUpdate->role_id = 1;
+            if($creditProspectUpdate->save()){
+                return $creditProspectUpdate->user_id;
+            }else{
+                return false;
+            }
         }else{
-            return false;
+            $this->credituid = (string) Str::uuid();
+            $this->channel_id = $request['channel_id'];
+            $this->email = $request['email'];
+            $this->mobile_phone_code = $request['mobile_phone_code'];
+            $this->mobile_phone_number = $request['mobile_phone_number'];
+            $this->role_id = 1;
+            if($this->save()){
+                return $this->user_id;
+            }else{
+                return false;
+            }
         }
+        
     }   
 
     public function saveCreditProspectData($request){

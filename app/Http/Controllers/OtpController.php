@@ -130,9 +130,8 @@ class OtpController extends Controller
         $deviceLocator = trim($request->device_locator);
         $expiry = config('constants.otpexpire'); //defined in constants.php file
       
-        //$expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
-        //->where('created_at', '>=', $expiryTime)
-        $checkOtp = Otp::where('device_locator',$deviceLocator)->where('used', 0)->where('code',$otp)->count();
+        $expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
+        $checkOtp = Otp::where('device_locator',$deviceLocator)->where('used', 0)->where('code',$otp)->where('created_at', '>=', $expiryTime)->count();
         
         if($checkOtp > 0){
             Otp::where('code',$otp)->update(['used' => 1]);
