@@ -26,6 +26,7 @@ Route::post('/send-otp',[OtpController::class,'sendOtp']);
     Route::post('save-creditapp',[CreditProspectController::class,'storePersonalInfoInCreditApp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
+    Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 //});
 
 
