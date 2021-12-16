@@ -26,7 +26,9 @@ class OtpController extends Controller
         $mobileNo = trim($request->mobile_phone_number);
         $emailId = trim($request->email);
         $phoneCode = trim($request->mobile_phone_code);
-
+        if($request->issend_toemail == 1 && empty($emailId)){
+            return '{ "success" : "fail" , "message" : "Please enter email Only" }';
+        }
         $otp = rand(100000, 999999);
         $flag = 0;
         if (is_numeric($mobileNo)) {
@@ -36,7 +38,7 @@ class OtpController extends Controller
 
             $message = 'OTP for ' . $application_name . ' Registration is : ' . $otp;
             $flag = $this->sendMessage($senderId, $mobileNo, $message, $phoneCode);
-
+           
             if ($flag == 0) {
                 return '{ "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';
             }
@@ -58,6 +60,7 @@ class OtpController extends Controller
             $otpInsert->communication_mode = "EMAIL";
             $otpInsert->device_locator = $emailId;
         } else {
+            
             $otpInsert->communication_mode = "PHONE";
             $otpInsert->device_locator = $mobileNo;
         }
@@ -96,8 +99,8 @@ class OtpController extends Controller
             //echo "cURL Error #:" . $err;
             return 0;
         } else {
-            //echo $response;
-            return 1;
+            return $response;
+            //return 1;
         }
     }   
 
