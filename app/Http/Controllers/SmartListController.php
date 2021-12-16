@@ -56,9 +56,7 @@ class SmartListController extends Controller
         ON a.lang_code = b.lang_code AND a.datacode = b.data_code
         INNER JOIN smart_list_data_groups as c 
         on a.lang_code = c.lang_code AND a.dgcode = c.dg_code where a.lang_code ="'.$langData['l_code'].'" and a.status = 1 '  );
-    
-         //$data = $smartlistData;
-         //dd($smartlistData);
+      
         foreach($smartlistData as $key => $value)
         { 
             $smartlistArray[$value->dg_desc][$value->order] = $value;
