@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Http\Requests;
-
+use App\Models\CreditProspect;
+use App\Models\Otp;
+use Illuminate\Support\Str;
 use Mail;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use JWTAuth;
+use Illuminate\Support\Facades\Validator;
 
 class OtpController extends Controller
-{
-     /**
+{   
+    /**
      * send a otp to request mobile no or email.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -19,12 +24,12 @@ class OtpController extends Controller
     public function sendOtp(Request $request)
     {       
        
-            $mobileNo = trim($request->mobile);
+            $mobileNo = trim($request->mobile_phone_number);
             $emailId = trim($request->email);
-            $phoneCode = trim($request->phonecode);
+            $phoneCode = trim($request->mobile_phone_code);
 
             $otp = rand(100000, 999999);
-    
+            $flag = 0;
             if(is_numeric($mobileNo)){
 
                 $application_name = config('constants.application_name');
@@ -34,25 +39,35 @@ class OtpController extends Controller
                 $flag = $this->sendMessage($senderId, $mobileNo, $message,$phoneCode);
                 
                 if($flag == 0){
-                    
-                    return ' { "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';	
+                    return '{ "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';	
+                }
+               
+            }else{
+                $messagePage = "mail"; // mail message in resources/views.
+                $subject = "Your CreditLinks One-Time Password";
+                $flag = $this->sendEmail($messagePage,$emailId,$subject,$otp);
+            }   
+                if(is_numeric($mobileNo)){
+                    $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->first(); 
+                }else{
+                    $creditProspectdata = CreditProspect::where('email', $emailId)->first(); 
                 }
                 
-                // $now = date("Y-m-d H:i:s");
-                
-                // $insert = new \App\OtpM;
-                // $insert->contact = $contact;
-                // $insert->otp = $otp;
-                // $insert->createdOn = $now;
-                // $insert->save();
-                
-                return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
-            }else{
-                $messagePage = "mail"; // Create message in view.
-                $subject = "Your CreditLinks One-Time Password";
-                $this->sendEmail($messagePage,$emailId,$subject,$otp);
-            }   
-        
+                $otpInsert = new Otp();
+                $otpInsert->code = $otp;
+                $otpInsert->otpuid = (string) Str::uuid();
+                if($request->issend_toemail == 1){
+                    $otpInsert->communication_mode = "EMAIL";
+                    $otpInsert->device_locator = $emailId;	     
+                }else{
+                    $otpInsert->communication_mode = "PHONE";
+                    $otpInsert->device_locator = $mobileNo;	   
+                } 
+                $otpInsert->user_id = $creditProspectdata['user_id']; // primary key of credit prospect table.
+                $otpInsert->save();
+                if($flag == 1){
+                    return ' { "status" : "success" , "message" : "OTP has been sent" } ';	
+                }
     }
     
     /**
@@ -94,18 +109,64 @@ class OtpController extends Controller
         
         $data = array("otp"=>$otp, "toEmail" => $toEmail,"subject" => $subject,'attachment' => $attachment);
 
-        $sentEmail = Mail::send($messagePage, $data, function($message) use ($data){
+        Mail::send($messagePage, $data, function($message) use ($data){
             $message->to($data['toEmail'])->subject($data['subject']);
             $message->from('noreply@creditlinks.in','CreditLinks');
             if(!empty($data['attachment'])){
                 $message->attach($data['attachment']);
              }
         });
-        if($sentEmail){
-            return '{ "status":"success" , "message":"Email sent successfully" }';
-        }else{
-            return '{ "status":"fail" , "message":"Something went wrong" }';
-        }
+      
     }
 
+    /**
+     * @param \Illuminate\Http\Request $request
+     */
+    public function authenticate(Request $request){
+      
+        $credentials = $request->only('code', 'device_locator');
+
+        $otp = trim($request->code);
+        $deviceLocator = trim($request->device_locator);
+        $expiry = config('constants.otpexpire'); //defined in constants.php file
+      
+        //$expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
+        //->where('created_at', '>=', $expiryTime)
+        $checkOtp = Otp::where('device_locator',$deviceLocator)->where('used', 0)->where('code',$otp)->count();
+        
+        if($checkOtp > 0){
+            Otp::where('code',$otp)->update(['used' => 1]);
+           
+            
+            //token generation
+            // try {
+            //     if (! $token = JWTAuth::attempt($credentials)) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => 'Login credentials are invalid.',
+            //         ], 400);
+            //     }
+            // } catch (JWTException $e) {
+            // return $credentials;
+            //     return response()->json([
+            //             'success' => false,
+            //             'message' => 'Could not create token.',
+            //         ], 500);
+            // }
+
+            return response([
+                'status' => 'success',
+                'message' => 'Verified Otp'
+            ], 200);
+
+
+        }
+        else{ 
+            return response([
+                'status' => 'fail',
+                'message' => 'Invalid Otp'
+            ], 200);
+        }
+    }
+    
 }

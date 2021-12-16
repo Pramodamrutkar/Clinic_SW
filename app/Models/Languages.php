@@ -8,4 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Languages extends Model
 {
     use HasFactory;
+
+    protected $table = "languages";
+    
+    protected $primaryKey = "l_code";
+    
+    public $timestamps = false; 
 }
