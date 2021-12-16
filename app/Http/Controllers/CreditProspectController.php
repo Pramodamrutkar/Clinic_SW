@@ -8,31 +8,41 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Http\Response;
 
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 
 class CreditProspectController extends Controller
 {
+    protected $user;
+
+    public function __construct()
+    {
+        $this->user = JWTAuth::parseToken()->authenticate();
+    }
 
     /**
      * Store basic credit prospect details on email or mobile no entered
      */
-    public function storeBasicDetails(Request $request){
+    // public function storeBasicDetails(Request $request){
     
-        $request->validate([
-            'issend_toemail' => 'required|boolean',
-            //'email' => 'required|string|unique:credit_prospect,email',
-            'channel_id' => 'required|string',
-        ]);
+    //     $request->validate([
+    //         'issend_toemail' => 'required|boolean',
+    //         //'email' => 'required|string|unique:credit_prospect,email',
+    //         'channel_id' => 'required|string',
+    //     ]);
         
-        //$request->credituid = (string) Str::uuid();
-        //return CreditProspect::create($request->all());
+    //     //$request->credituid = (string) Str::uuid();
+    //     //return CreditProspect::create($request->all());
 
-        $obj = new CreditProspect();
-        $response = $obj->saveBasicsdetails($request);
-        return $response; 
-    }  
+    //     $obj = new CreditProspect();
+    //     $response =   $obj->saveBasicsdetails($request);
+    //     return $response; 
+    // }  
 
     public function storePersonalInfoInCreditApp(Request $request){
+        
        $creditAppobj = new CreditApp();
        $response = $creditAppobj->savePersonalInformationiInApp($request);
        return $response;

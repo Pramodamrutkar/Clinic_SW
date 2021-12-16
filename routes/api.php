@@ -17,17 +17,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('/apply-loan',[CreditProspectController::class,'storeBasicDetails']);
-Route::post('/verifyotp',[OtpController::class,'authenticate']);    
-Route::post('/send-otp',[OtpController::class,'sendOtp']);
+Route::post('/apply-loan', [OtpController::class, 'storeBasicDetails']);
+Route::post('/verifyotp', [OtpController::class, 'authenticate']);
+Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 
 
-//Route::group(['middleware' => ['jwt.verify']], function() {
-    Route::post('save-creditapp',[CreditProspectController::class,'storePersonalInfoInCreditApp']);
+Route::group(['middleware' => ['jwt.verify']], function () {
+    Route::get('logout', [OtpController::class, 'logout']);
+    Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
     Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
-//});
+  
+});
 
 
 

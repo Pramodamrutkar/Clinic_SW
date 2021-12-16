@@ -20,8 +20,7 @@ class CreditApp extends Model
 
     public function savePersonalInformationiInApp($request){
 
-        $creditProspect = new CreditProspect();
-        $creditProspectUuid = $creditProspect->saveCreditProspectData($request);
+        $creditProspectUuid = $this->saveCreditProspectData($request);
         $this->creditprospect_uuid = $creditProspectUuid;
         $this->creditapp_uuid = (string) Str::uuid();
         $this->first_name = $request['first_name'];
@@ -52,16 +51,38 @@ class CreditApp extends Model
         $this->when_last_attempted = $request['when_last_attempted'];
         if($this->save()){
             return response([
-                'status' => 'success',
+                'success' => 'true',
                 'message' => 'Added Record Successfully!',
-                'app_id' => $this->app_id
+                'app_id' => $this->creditapp_uuid
             ],201);
             
         }else{
             return response([
-                'status' => 'fail',
+                'success' => 'false',
                 'message' => 'something went wrong!'
             ],200);
+        }
+    }
+
+    public function saveCreditProspectData($request){
+        
+        $creditProspectData = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->where('email',$request->email)->first();
+        if(empty($creditProspectData)){
+            return response([
+                'success' => 'false',
+                'message' => 'You have entered incorrect phone or email!'
+            ],200);
+        }
+        $creditProspectData->first_name = $request['first_name'];
+        $creditProspectData->middle_name = $request['middle_name'];
+        $creditProspectData->last_name = $request['last_name'];
+        $creditProspectData->birth_date = $request['birth_date'];
+        $creditProspectData->tin = $request['tin'];
+        $creditProspectData->credit_amount = $request['credit_amount'];
+        if($creditProspectData->save()){
+            return $creditProspectData->credituid;	
+        }else{
+            return false;
         }
     }
 }
