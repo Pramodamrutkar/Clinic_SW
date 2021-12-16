@@ -60,8 +60,10 @@ class SmartListController extends Controller
          //$data = $smartlistData;
          //dd($smartlistData);
         foreach($smartlistData as $key => $value)
-        {
+        { 
             $smartlistArray[$value->dg_desc][$value->order] = $value;
+            unset($value->order);
+            unset($value->dg_desc);
         }
        
         return $smartlistArray;
