@@ -6,7 +6,7 @@ return [
     
     "sender" => 'CREDITLNK',
 
-    'otpexpire' => "5",
+    'otpexpire' => "1",
     
     "application_name" => "CREDITLINKS"
 

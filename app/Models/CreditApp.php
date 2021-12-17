@@ -20,8 +20,7 @@ class CreditApp extends Model
 
     public function savePersonalInformationiInApp($request){
 
-        $creditProspect = new CreditProspect();
-        $creditProspectUuid = $creditProspect->saveCreditProspectData($request);
+        $creditProspectUuid = $this->saveCreditProspectData($request);
         $this->creditprospect_uuid = $creditProspectUuid;
         $this->creditapp_uuid = (string) Str::uuid();
         $this->first_name = $request['first_name'];
@@ -41,7 +40,7 @@ class CreditApp extends Model
         $this->employment_status_code = $request['employment_status_code'];
         $this->annual_income = $request['annual_income'];
         $this->credit_amount = $request['credit_amount'];
-        $this->currency_code = $request['currency_code'];
+        $this->currency_code = empty($request['currency_code']) ? 'INR' : $request['currency_code'];
         $this->marketing_consent = $request['marketing_consent'];
         $this->allow_emails = $request['allow_emails'];
         $this->allow_sms = $request['allow_sms'];
@@ -52,16 +51,48 @@ class CreditApp extends Model
         $this->when_last_attempted = $request['when_last_attempted'];
         if($this->save()){
             return response([
-                'status' => 'success',
+                'success' => 'true',
                 'message' => 'Added Record Successfully!',
-                'app_id' => $this->app_id
-            ],201);
+                'app_id' => $this->creditapp_uuid
+            ],200);
             
         }else{
             return response([
-                'status' => 'fail',
+                'success' => 'false',
                 'message' => 'something went wrong!'
-            ],200);
+            ],400);
+        }
+    }
+
+    public function saveCreditProspectData($request){
+        
+        $creditProspectData = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->orWhere('email',$request->email)->first();
+        if(empty($creditProspectData)){
+            return response([
+                'success' => 'false',
+                'message' => 'You have entered incorrect phone or email!'
+            ],400);
+        }
+        $creditProspectData->first_name = $request['first_name'];
+        $creditProspectData->middle_name = $request['middle_name'];
+        $creditProspectData->last_name = $request['last_name'];
+        $creditProspectData->birth_date = $request['birth_date'];
+        $creditProspectData->tin = $request['tin'];
+        $creditProspectData->credit_amount = $request['credit_amount'];
+        $creditProspectData->email = $request['email'];
+        $creditProspectData->mobile_phone_number = $request['mobile_phone_number'];
+        if($creditProspectData->save()){
+            return $creditProspectData->credituid;	
+            // return response([
+            //     'success' => 'true',
+            //     'message' => 'Added Record Successfully!',
+            //     'app_id' => $creditProspectData->credituid
+            // ],200);
+        }else{
+            return response([
+                'success' => 'false',
+                'message' => 'something went wrong!'
+            ],400);
         }
     }
 }

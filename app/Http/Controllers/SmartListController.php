@@ -6,7 +6,7 @@ use App\Models\SmartList;
 use App\Models\SmartListData;
 use App\Models\SmartListDataGroup;
 use Illuminate\Http\Request;
-use Illuminate\support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\Languages;
 
 class SmartListController extends Controller
@@ -51,17 +51,17 @@ class SmartListController extends Controller
         $langData = Languages::where('langsdesc', $lcode )->first();
 
      
-        $smartlistData = DB::select('SELECT b.data_code,b.data_ldesc,b.order,c.dg_desc FROM smart_lists as a 
+        $smartlistData = DB::select('SELECT b.data_code as id,b.data_ldesc as value, b.order,c.dg_desc FROM smart_lists as a 
         INNER JOIN smart_list_data as b 
         ON a.lang_code = b.lang_code AND a.datacode = b.data_code
         INNER JOIN smart_list_data_groups as c 
         on a.lang_code = c.lang_code AND a.dgcode = c.dg_code where a.lang_code ="'.$langData['l_code'].'" and a.status = 1 '  );
-    
-         //$data = $smartlistData;
-         //dd($smartlistData);
+      
         foreach($smartlistData as $key => $value)
-        {
+        { 
             $smartlistArray[$value->dg_desc][$value->order] = $value;
+            unset($value->order);
+            unset($value->dg_desc);
         }
        
         return $smartlistArray;
