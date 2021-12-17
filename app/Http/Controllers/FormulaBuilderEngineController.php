@@ -61,11 +61,11 @@ class FormulaBuilderEngineController extends Controller
 					->select('*')
 					->whereIn('offer_name',$new_arr)
 					->get();
-					
-		$data = array();
-		$array1 = json_decode(json_encode($offersData),True);
+		return $offersData;			
+	//	$data = array();
+	//	$array1 = json_decode(json_encode($offersData),True);
 								//dd($array1);
-		foreach($array1 as $key => $val)
+		/*foreach($array1 as $key => $val)
 		{
 									
 			$grantAmount_1 = $val['offer_grant_amount_1'] * $amountValue;
@@ -98,14 +98,14 @@ class FormulaBuilderEngineController extends Controller
 			$data[]['total_ranking_offer_2'] = $data[6]['calculated_amount_offer_2'] + $data[7]['roi_offer_2'] + $data[8]['tenure_offer_2'];				
 			$data[]['total_ranking_offer_3'] = $data[9]['calculated_amount_offer_3'] + $data[10]['roi_offer_3'] + $data[11]['tenure_offer_3'];
 //dd($data);
-		}
+		}*/
 			//dd($data);
-			$newarray = array_chunk($data,15);
+		/*	$newarray = array_chunk($data,15);
 			$getData = $this->my_array_merge($array1, $newarray);
 			//dd($getData);
 								
 															
-        return $offersData;
+        return $offersData;*/
     }
 	
 	function my_array_merge(&$array1, &$newarray) 
