@@ -40,7 +40,7 @@ class CreditApp extends Model
         $this->employment_status_code = $request['employment_status_code'];
         $this->annual_income = $request['annual_income'];
         $this->credit_amount = $request['credit_amount'];
-        $this->currency_code = $request['currency_code'];
+        $this->currency_code = empty($request['currency_code']) ? 'INR' : $request['currency_code'];
         $this->marketing_consent = $request['marketing_consent'];
         $this->allow_emails = $request['allow_emails'];
         $this->allow_sms = $request['allow_sms'];
@@ -54,24 +54,24 @@ class CreditApp extends Model
                 'success' => 'true',
                 'message' => 'Added Record Successfully!',
                 'app_id' => $this->creditapp_uuid
-            ],201);
+            ],200);
             
         }else{
             return response([
                 'success' => 'false',
                 'message' => 'something went wrong!'
-            ],200);
+            ],400);
         }
     }
 
     public function saveCreditProspectData($request){
         
-        $creditProspectData = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->where('email',$request->email)->first();
+        $creditProspectData = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->orWhere('email',$request->email)->first();
         if(empty($creditProspectData)){
             return response([
                 'success' => 'false',
                 'message' => 'You have entered incorrect phone or email!'
-            ],200);
+            ],400);
         }
         $creditProspectData->first_name = $request['first_name'];
         $creditProspectData->middle_name = $request['middle_name'];
@@ -79,10 +79,20 @@ class CreditApp extends Model
         $creditProspectData->birth_date = $request['birth_date'];
         $creditProspectData->tin = $request['tin'];
         $creditProspectData->credit_amount = $request['credit_amount'];
+        $creditProspectData->email = $request['email'];
+        $creditProspectData->mobile_phone_number = $request['mobile_phone_number'];
         if($creditProspectData->save()){
             return $creditProspectData->credituid;	
+            // return response([
+            //     'success' => 'true',
+            //     'message' => 'Added Record Successfully!',
+            //     'app_id' => $creditProspectData->credituid
+            // ],200);
         }else{
-            return false;
+            return response([
+                'success' => 'false',
+                'message' => 'something went wrong!'
+            ],400);
         }
     }
 }

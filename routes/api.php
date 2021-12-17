@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\CreditProspectController;
+use App\Http\Controllers\MoneyViewApp;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SmartListController;
+use App\Http\Controllers\UpwardsApp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,14 +22,15 @@ use Illuminate\Support\Facades\Route;
 Route::post('/apply-loan', [OtpController::class, 'storeBasicDetails']);
 Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
-
+Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
-    Route::get('logout', [OtpController::class, 'logout']);
+    Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
-    Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
+    Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
+    Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
   
 });
 

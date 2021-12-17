@@ -51,7 +51,7 @@ class SmartListController extends Controller
         $langData = Languages::where('langsdesc', $lcode )->first();
 
      
-        $smartlistData = DB::select('SELECT b.data_code,b.data_ldesc,b.order,c.dg_desc FROM smart_lists as a 
+        $smartlistData = DB::select('SELECT b.data_code as id,b.data_ldesc as value, b.order,c.dg_desc FROM smart_lists as a 
         INNER JOIN smart_list_data as b 
         ON a.lang_code = b.lang_code AND a.datacode = b.data_code
         INNER JOIN smart_list_data_groups as c 

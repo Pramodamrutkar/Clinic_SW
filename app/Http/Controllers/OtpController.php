@@ -40,18 +40,21 @@ class OtpController extends Controller
             $flag = $this->sendMessage($senderId, $mobileNo, $message, $phoneCode);
            
             if ($flag == 0) {
-                return '{ "status" : "fail" , "message" : "Some Error occured While sending OTP" } ';
+                return response([
+                    'success' => 'fail',
+                    'message' => "Some Error occured While sending OTP"
+                ], 400);
             }
         } else {
             $messagePage = "mail"; // mail message in resources/views.
             $subject = "Your CreditLinks One-Time Password";
             $flag = $this->sendEmail($messagePage, $emailId, $subject, $otp);
         }
-        if (is_numeric($mobileNo)) {
-            $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->first();
-        } else {
-            $creditProspectdata = CreditProspect::where('email', $emailId)->first();
-        }
+        //if (is_numeric($mobileNo)) {
+            $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->orWhere('email', $emailId)->first();
+        //} else {
+        //  $creditProspectdata = CreditProspect::where('email', $emailId)->first();
+        //}
 
         $otpInsert = new Otp();
         $otpInsert->code = $otp;
@@ -64,12 +67,18 @@ class OtpController extends Controller
             $otpInsert->communication_mode = "PHONE";
             $otpInsert->device_locator = $mobileNo;
         }
-        $otpInsert->user_id = $creditProspectdata['user_id']; // primary key of credit prospect table.
+        $otpInsert->user_id = empty($creditProspectdata['user_id']) ? 0 : $creditProspectdata['user_id']; // primary key of credit prospect table.
         if ($otpInsert->save()) {
             $maskId = $this->maskEmailOrPhone($otpInsert->device_locator);
-            return ' { "success" : "true" , "message" : "OTP has been sent to '.$maskId.'" }';
+            return response([
+                'success' => 'true',
+                'message' => "OTP has been sent to '.$maskId.'"
+            ], 200);
         } else {
-            return ' { "success" : "fail" , "message" : "Some Error occured While sending OTP" }';
+            return response([
+                'success' => 'fail',
+                'message' => "Some Error occured While sending OTP"
+            ], 400);
         }
     }
 
@@ -116,6 +125,7 @@ class OtpController extends Controller
                 $message->attach($data['attachment']);
             }
         });
+        return 1;
     }
 
     /**
@@ -163,21 +173,21 @@ class OtpController extends Controller
             return response([
                 'success' => 'fail',
                 'message' => 'Invalid Otp'
-            ], 200);
+            ], 400);
         }
     }
 
     public function logout(Request $request)
     {
         //valid credential
-        $validator = Validator::make($request->only('token'), [
-            'token' => 'required'
-        ]);
+        // $validator = Validator::make($request->only('token'), [
+        //     'token' => 'required'
+        // ]);
 
-        //Send failed response if request is not valid
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->messages()], 200);
-        }
+        // //Send failed response if request is not valid
+        // if ($validator->fails()) {
+        //     return response()->json(['error' => $validator->messages()], 200);
+        // }
 
 		//Request is validated, do logout        
         try {
@@ -186,7 +196,7 @@ class OtpController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User has been logged out'
-            ]);
+            ],200);
         } catch (JWTException $exception) {
             return response()->json([
                 'success' => false,
@@ -239,7 +249,7 @@ class OtpController extends Controller
                 return response([
                     'success' => 'false',
                     'message' => 'something went wrong!'
-                ],200);
+                ],400);
             }
         }else{
             $obj  = new CreditProspect();
@@ -260,7 +270,7 @@ class OtpController extends Controller
                 return response([
                     'success' => 'false',
                     'message' => 'something went wrong!'
-                ],200);
+                ],400);
             }
         }
         
