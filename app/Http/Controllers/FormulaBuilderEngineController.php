@@ -102,7 +102,7 @@ class FormulaBuilderEngineController extends Controller
 			//dd($data);
 			$newarray = array_chunk($data,15);
 			$getData = $this->my_array_merge($array1, $newarray);
-			dd($getData);
+			//dd($getData);
 								
 															
         return $offersData;
