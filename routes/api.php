@@ -5,6 +5,7 @@ use App\Http\Controllers\MoneyViewApp;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SmartListController;
 use App\Http\Controllers\UpwardsApp;
+use App\Http\Controllers\FormulaBuilderEngineController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -33,12 +34,3 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
     Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
 });
-
-
-
-
-
-
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
