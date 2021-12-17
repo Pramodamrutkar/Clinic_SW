@@ -27,6 +27,7 @@ Route::post('/send-otp',[OtpController::class,'sendOtp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
     Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
+    Route::get('/formula/{postalCode}/{fKey_1}/{fval_1}/{fKey_2}/{fval_2}/{fKey_3}/{fval_3}/{fKey_4}/{fval_4}/{fKey_5}/{fval_5}', [FormulaBuilderEngineController::class, 'searchOffer']);
 //});
 
 
