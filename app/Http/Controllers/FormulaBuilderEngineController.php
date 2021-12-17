@@ -7,15 +7,14 @@ use Illuminate\support\Facades\DB;
 use App\Models\FormulaBuilderEngine;
 use App\Models\Locations;
 use App\Models\Offers;
-use App\Models\OfferWeightage
+use App\Models\OfferWeightage;
 
 
 class FormulaBuilderEngineController extends Controller
 {
     //
 	/**
-     * Display a listing of the resource.
-     *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function searchOffer(Request $request)
