@@ -24,7 +24,7 @@ Route::post('/apply-loan', [OtpController::class, 'storeBasicDetails']);
 Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
-Route::get('/formula/{postalCode}/{fKey_1}/{fval_1}/{fKey_2}/{fval_2}/{fKey_3}/{fval_3}/{fKey_4}/{fval_4}/{fKey_5}/{fval_5}', [FormulaBuilderEngineController::class, 'searchOffer']);
+Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
