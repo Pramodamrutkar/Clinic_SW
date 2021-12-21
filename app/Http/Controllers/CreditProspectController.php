@@ -15,12 +15,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CreditProspectController extends Controller
 {
-    protected $user;
-
-    public function __construct()
-    {
-        $this->user = JWTAuth::parseToken()->authenticate();
-    }
 
     /**
      * Store basic credit prospect details on email or mobile no entered
@@ -45,6 +39,12 @@ class CreditProspectController extends Controller
         
        $creditAppobj = new CreditApp();
        $response = $creditAppobj->savePersonalInformationiInApp($request);
+       return $response;
+    }
+
+    public function userDetails($app_id){
+       $creditProspect = new CreditProspect();
+       $response = $creditProspect->retriveUseronAppID($app_id);
        return $response;
     }
 }

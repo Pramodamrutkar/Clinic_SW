@@ -18,4 +18,10 @@ class MoneyViewApp extends Controller
         $response = $moneyViewApp->saveMoneyView($request,$app_id);
         return $response;
     }
+
+    public function showOfferChart($app_id){
+        $moneyViewApp = new MoneyViewAppModel();
+        $response = $moneyViewApp->listOfferChart($app_id);
+        return $response;
+    }
 }

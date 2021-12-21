@@ -140,9 +140,8 @@ class OtpController extends Controller
         $deviceLocator = trim($request->device_locator);
         $expiry = config('constants.otpexpire'); //defined in constants.php file
 
-        //$expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
-        //where('created_at', '>=', $expiryTime)->
-        $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->count();
+        $expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
+        $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('created_at', '>=', $expiryTime)->count();
 
         if ($checkOtp > 0) {
            //token generation
@@ -228,7 +227,7 @@ class OtpController extends Controller
 
 
     public function storeBasicDetails(Request $request){
-        $creditProspectUpdate = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->where('email',$request->email)->first();
+        $creditProspectUpdate = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->orWhere('email',$request->email)->first();
      
         if(!empty($creditProspectUpdate)){
             $creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
@@ -258,6 +257,8 @@ class OtpController extends Controller
             $obj->email = $request['email'];
             $obj->mobile_phone_code = $request['mobile_phone_code'];
             $obj->mobile_phone_number = $request['mobile_phone_number'];
+            $obj->merchant_tracking_id = $request['merchant_tracking_id'];
+            $obj->merchant_location_id = $request['merchant_location_id'];
             $obj->role_id = 1;
             if($obj->save()){
                 //return $obj->credituid;

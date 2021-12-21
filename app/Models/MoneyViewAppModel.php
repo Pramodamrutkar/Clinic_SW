@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\MoneyViewApp;
+use App\Http\Controllers\UpwardsApp;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\CreditApp;
+use DB;
 
 class MoneyViewAppModel extends Model
 {
@@ -54,4 +57,22 @@ class MoneyViewAppModel extends Model
         }
     }
 
+    public function listOfferChart($app_id){
+        if(empty($app_id)){
+            return Response([
+                'status' => 'false',
+                'message' => 'Empty Application ID'
+            ],400);
+        }
+        
+        $offerData = DB::table('moneyview_app')
+        ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
+        ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
+        ->where('moneyview_app.creditapp_uid','=',trim($app_id))
+        ->select('moneyview_app.lender_system_id as moneyviewLender','moneyview_app.amount as moneyviewAmount','moneyview_app.mis_status as moneyviewStatus','upwards_app.lender_system_id as upwardsLender','upwards_app.amount as upwardsAmount','upwards_app.mis_status as upwardsStatus','cashe_app.lender_system_id as casheLender','cashe_app.amount as casheAmount','cashe_app.mis_status as casheStatus')
+        ->first();
+        
+        return $offerData;
+        
+    }
 }

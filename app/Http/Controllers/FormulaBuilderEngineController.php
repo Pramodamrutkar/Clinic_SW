@@ -3,57 +3,68 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\support\Facades\DB;
 use App\Models\FormulaBuilderEngine;
 use App\Models\Locations;
 use App\Models\Offers;
 use App\Models\OfferWeightage;
-
+use App\Models\CreditApp;
+use DateTime;
+use DB;
 
 class FormulaBuilderEngineController extends Controller
 {
     //
 	/**
-     * @param  \Illuminate\Http\Request  $request
+     * Display a listing of the resource.
+     *
      * @return \Illuminate\Http\Response
      */
     public function searchOffer(Request $request)
-    {
-		$postalCode = trim($request->postalCode);
-		$amountKey = trim($request->fKey_1);
-		$amountValue = trim($request->fval_1);
-		$ageKey = trim($request->fKey_2);
-		$ageValue = trim($request->fval_2);
-		$City_TierKey = trim($request->fKey_3);
-		$City_TierValue = trim($request->fval_3);
-		$genderKey = trim($request->fKey_4);
-		$genderValue = trim($request->fval_4);
-		$employeement_typeKey = trim($request->fKey_5);
-		$employeement_typeValue = trim($request->fval_5);
-	//
-	
+    {		
+		$creditAppUUID = trim($request->uuID);
+
+		$CreditAppData = CreditApp::where('creditapp_uuid', $creditAppUUID )->first();
+		$monthlyIncome = $CreditAppData->monthly_income;
+		$birthDate = $CreditAppData->birth_date;
+		$postalCode = $CreditAppData->postal_code;
+		$employeementStatus = $CreditAppData->employment_status_code;
+		
+		$from = new DateTime($birthDate);
+		$to   = new DateTime('today');
+		$age  = $from->diff($to)->y;
+		
 	
         $locationData = Locations::where('postal_code', $postalCode )->first();
-		//dd($locationData);
 		
-		if($amountValue <= 20000)
+		if($monthlyIncome <= 20000)
 		{
 			return "Not eligible for any offer";
 		}
+	/*	if($monthlyIncome > 30001)
+		{
+			$offerName = DB::select('SELECT offer_name FROM `formula_builder_engine` 
+			where (offer_key ="'.$amountKey.'" AND offer_min_number >= "'.$amountValue.'" AND offer_max_number >= "'.$amountValue.'" AND status = 1)
+			UNION ALL
+			SELECT offer_name FROM `formula_builder_engine`
+			where (offer_key ="'.$amountKey.'" AND offer_min_number >= "'.$amountValue.'" AND offer_max_number >= "'.$amountValue.'" AND status = 1)
+			AND (offer_key ="'.$ageKey.'" AND offer_min_number <= "'.$ageValue.'" AND offer_max_number >= "'.$ageValue.'" AND status = 1) 
+			AND (offer_key ="'.$City_TierKey.'" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
+			AND (offer_key ="'.$employeement_typeKey.'" AND offer_min_number = "'.$employeement_typeValue.'" AND status = 1)');
+		}*/
 		$offerName = DB::select('SELECT offer_name FROM `formula_builder_engine` 
-		where (offer_key ="'.$amountKey.'" AND offer_min_number <= "'.$amountValue.'" AND offer_max_number >= "'.$amountValue.'" AND status = 1)
+		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
 		UNION ALL
 		SELECT offer_name FROM `formula_builder_engine`
-		where (offer_key ="'.$amountKey.'" AND offer_min_number <= "'.$amountValue.'" AND offer_max_number >= "'.$amountValue.'" AND status = 1)
-		AND (offer_key ="'.$ageKey.'" AND offer_min_number <= "'.$ageValue.'" AND offer_max_number >= "'.$ageValue.'" AND status = 1) 
-		AND (offer_key ="'.$City_TierKey.'" AND offer_min_number = "'.$City_TierValue.'" AND status = 1)
-		AND (offer_key ="'.$employeement_typeKey.'" AND offer_min_number = "'.$employeement_typeValue.'" AND status = 1)');
-								
+		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
+		AND (offer_key = "age" AND offer_min_number <= "'.$age.'" AND offer_max_number >= "'.$age.'" AND status = 1) 
+		AND (offer_key = "City_Tier" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
+		AND (offer_key = "employeement_type" AND offer_min_number = "'.$employeementStatus.'" AND status = 1)');
+	
 		foreach($offerName as $value)
 		{
 			$new_arr[] = $value->offer_name;
 		}								
-								
+					
 		//DB::connection()->enableQueryLog();
 		//dd(DB::getQueryLog());	
 		
@@ -61,51 +72,138 @@ class FormulaBuilderEngineController extends Controller
 					->select('*')
 					->whereIn('offer_name',$new_arr)
 					->get();
-		return $offersData;			
-	//	$data = array();
-	//	$array1 = json_decode(json_encode($offersData),True);
-								//dd($array1);
-		/*foreach($array1 as $key => $val)
-		{
+					
+		$data = array();
+		$array1 = json_decode(json_encode($offersData),True);
+		
+							
+		foreach($array1 as $key => $val)
+		{			
+			
+			$weightageData = OfferWeightage::where('lender_name', $val['lender_name'])->first();
+		
+			$grantAmount_1 = $val['offer_grant_amount_1'] * $monthlyIncome;
+			$grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome;
+			$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome;
 									
-			$grantAmount_1 = $val['offer_grant_amount_1'] * $amountValue;
-			$grantAmount_2 = $val['offer_grant_amount_2'] * $amountValue;
-			$grantAmount_3 = $val['offer_grant_amount_3'] * $amountValue;
-									
-									
-			$data[]['offer_amount_1'] = $grantAmount_1;
-			$data[]['offer_amount_2'] = $grantAmount_2;
-			$data[]['offer_amount_3'] = $grantAmount_3;
-									
+			
+			$data[] = array('offer_amount_1' =>$grantAmount_1);
+			$data[] = array('offer_amount_2' =>$grantAmount_2);
+			$data[] = array('offer_amount_3' =>$grantAmount_3);
+			
+			
+			
 			//offer 1
-			$data[]['calculated_amount_offer_1'] = $data[0]['offer_amount_1']*25/100;
-			$data[]['roi_offer_1'] = $val['offer_grant_amount_1'] *50/100;
-			$data[]['tenure_offer_1'] = $val['offer_tenure_1'] *25/100;
+			
+			$data[]['offer_amount_1'] = $data[0]['offer_amount_1']*$weightageData->amount_weight/100;
+			$data[]['offer_amount_1'] = $val['offer_grant_amount_1'] *$weightageData->roi_weight/100;
+			$data[]['offer_amount_1'] = $val['offer_tenure_1'] *$weightageData->tenure_weight/100;
 									
 									
 			//offer2
-			$data[]['calculated_amount_offer_2'] = $data[1]['offer_amount_2']*25/100;
-			$data[]['roi_offer_2'] = $val['offer_grant_amount_2'] *50/100;
-			$data[]['tenure_offer_2'] = $val['offer_tenure_2'] *25/100;
+			$data[]['offer_amount_2'] = $data[1]['offer_amount_2']*$weightageData->amount_weight/100;
+			$data[]['offer_amount_2'] = $val['offer_grant_amount_2'] *$weightageData->roi_weight/100;
+			$data[]['offer_amount_2'] = $val['offer_tenure_2'] *$weightageData->tenure_weight/100;
 									
 			//offer3
-			$data[]['calculated_amount_offer_3'] = $data[2]['offer_amount_3']*25/100;
-			$data[]['roi_offer_3'] = $val['offer_grant_amount_3'] *50/100;
-			$data[]['tenure_offer_3'] = $val['offer_tenure_3'] *25/100;
+			$data[]['offer_amount_3'] = $data[2]['offer_amount_3']*$weightageData->amount_weight/100;
+			$data[]['offer_amount_3'] = $val['offer_grant_amount_3'] *$weightageData->roi_weight/100;
+			$data[]['offer_amount_3'] = $val['offer_tenure_3'] *$weightageData->tenure_weight/100;
 									
 			//Total ranking
-			$data[]['total_ranking_offer_1'] = $data[3]['calculated_amount_offer_1'] + $data[4]['roi_offer_1'] + $data[5]['tenure_offer_1'];			
-			$data[]['total_ranking_offer_2'] = $data[6]['calculated_amount_offer_2'] + $data[7]['roi_offer_2'] + $data[8]['tenure_offer_2'];				
-			$data[]['total_ranking_offer_3'] = $data[9]['calculated_amount_offer_3'] + $data[10]['roi_offer_3'] + $data[11]['tenure_offer_3'];
-//dd($data);
-		}*/
-			//dd($data);
-		/*	$newarray = array_chunk($data,15);
-			$getData = $this->my_array_merge($array1, $newarray);
-			//dd($getData);
+			$data[]['offer_amount_1'] = $data[3]['offer_amount_1'] + $data[4]['offer_amount_1'] + $data[5]['offer_amount_1'];			
+			$data[]['offer_amount_2'] = $data[6]['offer_amount_2'] + $data[7]['offer_amount_2'] + $data[8]['offer_amount_2'];				
+			$data[]['offer_amount_3'] = $data[9]['offer_amount_3'] + $data[10]['offer_amount_3'] + $data[11]['offer_amount_3'];
+			
+			$data[]['offer_amount_1'] = $val['offer_month_1'];
+			$data[]['offer_amount_2'] =$val['offer_month_2'];
+			$data[]['offer_amount_3'] = $val['offer_month_3'];
+			
+			$data[]['offer_amount_1'] = $val['offer_tenure_1'];
+			$data[]['offer_amount_2'] =$val['offer_tenure_2'];
+			$data[]['offer_amount_3'] = $val['offer_tenure_3'];
+			
+			$data[]['offer_amount_1'] = $val['offer_roi_1'];
+			$data[]['offer_amount_2'] =$val['offer_roi_2'];
+			$data[]['offer_amount_3'] = $val['offer_roi_3'];
+			
+			$data[]['offer_amount_1'] = $val['offer_pf_1'];
+			$data[]['offer_amount_2'] =$val['offer_pf_2'];
+			$data[]['offer_amount_3'] = $val['offer_pf_3'];
+			
+		}
+	
+			$newarray = array_chunk($data,27);
+		
+			$offer =[];
+			foreach($newarray as $data)
+			{
+				$offer_1 = array_column($data,'offer_amount_1',);
+				$offer_2 = array_column($data,'offer_amount_2',);
+				$offer_3 = array_column($data,'offer_amount_3',);
+				array_push($offer,$offer_1);
+				array_push($offer,$offer_2);
+				array_push($offer,$offer_3);
+				
+			}
+			
+			$split_array = array_chunk($offer,3);
+			
+			$main_array =array();
+			foreach($split_array as $key1=> $val)
+			{
+				foreach($val as $key2 => $data_test)
+				{									
+					$push_data = array('offer_amount_'.$key2+1 => $data_test[0]);
+					$push_data += array('calculated_amount_offer_'.$key2+1 => $data_test[1]);
+					$push_data += array('roi_offer_'.$key2+1 => $data_test[2]);
+					$push_data += array('tenure_offer_'.$key2+1 => $data_test[3]);
+					$push_data += array('total_ranking_offer_'.$key2+1 => $data_test[4]);
+					$push_data += array('offer_month_'.$key2+1 => $data_test[5]);
+					$push_data += array('offer_tenure_'.$key2+1 => $data_test[6]);
+					$push_data += array('offer_roi_'.$key2+1 => $data_test[7]);
+					$push_data += array('offer_pf_'.$key2+1 => $data_test[8]);
+					
+					array_push($main_array,$push_data);
+					
+				}
+				
+			}
+		
+				$Final_array = array_chunk($main_array,3);
 								
+				$getData = $this->my_array_merge($array1, $Final_array);
+				
+				foreach($getData as $key => $v)
+				{
+					$a= $getData[$key][0]['total_ranking_offer_1'];
+					$b= $getData[$key][1]['total_ranking_offer_2'];
+					$c= $getData[$key][2]['total_ranking_offer_3'];
+										
+					if ($a <= $b && $a <= $c)
+					{
+						$getData[$key][0]['total_ranking_offer_1'];
+						unset($getData[$key][1]);
+						unset($getData[$key][2]);
+						
+					}					
+					else if ($b <= $a && $b <= $c)
+					{
+						$getData[$key][1]['total_ranking_offer_2'];
+						unset($getData[$key][0]);
+						unset($getData[$key][2]);
+						
+					}
+					else
+					{						
+						$getData[$key][2]['total_ranking_offer_3'];
+						unset($getData[$key][0]);
+						unset($getData[$key][1]);												
+					}
+				}
+				//echo"<pre>getdata<br>";print_r($getData);exit;
 															
-        return $offersData;*/
+        return $getData;
     }
 	
 	function my_array_merge(&$array1, &$newarray) 
@@ -118,4 +216,5 @@ class FormulaBuilderEngineController extends Controller
 		
 		return $result;
 	}
+	 
 }

@@ -85,6 +85,7 @@ class CreditApp extends Model
         $creditProspectData->tin = $request['tin'];
         $creditProspectData->credit_amount = $request['credit_amount'];
         $creditProspectData->email = $request['email'];
+        $creditProspectData->is_editing = 0; // false
         $creditProspectData->mobile_phone_number = $request['mobile_phone_number'];
         if($creditProspectData->save()){
             return $creditProspectData->credituid;	

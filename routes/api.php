@@ -25,6 +25,7 @@ Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
+Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
@@ -33,4 +34,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('/smartlist', [SmartListController::class, 'index']);
     Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
     Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
+    Route::get('/user/{app_id}',[CreditProspectController::class, 'userDetails']);
+   
 });

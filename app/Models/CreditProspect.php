@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Facade\FlareClient\Http\Response;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -52,5 +53,21 @@ class CreditProspect extends Model
         
     // }   
 
-    
+    public function retriveUseronAppID($appId){
+        $app_ID = trim($appId);
+        $creditProspectData = CreditProspect::where('credituid',trim($app_ID))->first();
+        if(empty($creditProspectData)){
+            return response([
+                'success' => 'false',
+                'message' => 'Invalid Application ID'
+            ],400);
+        }else{
+            return response([
+                'success' => 'true',
+                'message' => 'Data found',
+                'data' => $creditProspectData
+            ],200);
+        }
+        
+    } 
 }
