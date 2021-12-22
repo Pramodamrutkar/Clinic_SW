@@ -46,6 +46,7 @@ class UpwardsAppModel extends Model
         $this->mis_status = $request['mis_status'];
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->leder_created = $request['leder_created'];
+        $this->processing_fees = $request['processing_fees'];
         if($this->save()){
             return Response([
                 'status' => 'true',

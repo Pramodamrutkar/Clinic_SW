@@ -139,12 +139,24 @@ class OtpController extends Controller
         $credentials = $request->only('code', 'device_locator');
         $otp = trim($request->code);
         $deviceLocator = trim($request->device_locator);
-        $expiry = config('constants.otpexpire'); //defined in constants.php file
-
+        $creditProspectId = trim($request->credit_prospect_id);
+        if(empty($creditProspectId)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Prospect ID',
+            ], 400);
+        }
         $expiryTime = date('Y-m-d H:i:s');
-
+        
         $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('expire_otp_time', '>=', $expiryTime)->get()->count();
 
+        $creditProspectdata = CreditProspect::where('credituid',$creditProspectId)->first();
+        if(empty($creditProspectdata)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Prospect Data',
+            ], 400);
+        }
         if ($checkOtp > 0) {
             //token generation
             try {
@@ -169,6 +181,7 @@ class OtpController extends Controller
                 'success' => 'true',
                 'message' => 'Verified Otp',
                 'token' => $token,
+                'data' => $creditProspectdata
             ], 200);
         } else {
             return response([
@@ -232,7 +245,7 @@ class OtpController extends Controller
     {
 
         $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
-
+        
         $merchantData = DB::table('merchant')
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
             ->where('merchant.url_segment', trim($request->url_segment))

@@ -43,6 +43,7 @@ class MoneyViewAppModel extends Model
         $this->mis_status = $request['mis_status'];
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->lender_created = $request['lender_created'];
+        $this->processing_fees = $request['processing_fees'];
         if($this->save()){
             return Response([
                 'status' => 'true',
@@ -72,9 +73,9 @@ class MoneyViewAppModel extends Model
         // ->select('moneyview_app.lender_system_id as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','upwards_app.lender_system_id as upwardsLender','upwards_app.amount as upwardsAmount','upwards_app.mis_status as upwardsStatus','cashe_app.lender_system_id as casheLender','cashe_app.amount as casheAmount','cashe_app.mis_status as casheStatus')
         // ->first();
 
-        $upwardsApp = UpwardsAppModel::select('upwards_app.lender_system_id as lender','upwards_app.amount as amount','upwards_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
-        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_system_id as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
-        $casheApp = CasheAppModel::select('cashe_app.lender_system_id as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+        $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+        $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
     
         $offerData = array();
         if(!empty($upwardsApp)){

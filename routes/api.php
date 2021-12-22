@@ -25,6 +25,7 @@ Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
+Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
 Route::group(['middleware' => ['jwt.verify']], function () {

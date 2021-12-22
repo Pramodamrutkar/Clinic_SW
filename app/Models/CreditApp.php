@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\CreditProspect;
+use DB;
 
 class CreditApp extends Model
 {
@@ -19,11 +20,10 @@ class CreditApp extends Model
 
 
     public function savePersonalInformationiInApp($request)
-    {
-
-        $creditProspectUuid = $this->saveCreditProspectData($request);
-        $this->creditprospect_uuid = $creditProspectUuid;
+    {   
         $this->creditapp_uuid = (string) Str::uuid();
+        $creditProspectUuid = $this->saveCreditProspectData($request,$this->creditapp_uuid);
+        $this->creditprospect_uuid = $creditProspectUuid;
         $this->first_name = $request['first_name'];
         $this->middle_name = $request['middle_name'];
         $this->last_name = $request['last_name'];
@@ -70,9 +70,8 @@ class CreditApp extends Model
         }
     }
 
-    public function saveCreditProspectData($request)
+    public function saveCreditProspectData($request, $creditInflightAppId)
     {
-
         $creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
         if (empty($creditProspectData)) {
             return response([
@@ -90,6 +89,7 @@ class CreditApp extends Model
         $creditProspectData->email = $request['email'];
         $creditProspectData->is_editing = 0; // false
         $creditProspectData->mobile_phone_number = $request['mobile_phone_number'];
+        $creditProspectData->inflight_credit_app_id = $creditInflightAppId;
         if ($creditProspectData->save()) {
             return $creditProspectData->credituid;
             // return response([
@@ -203,4 +203,39 @@ class CreditApp extends Model
         // $instance_url= $response['instance_url'];
         // echo $instance_url;
     }
+
+    public function verifyUsingTin($request){
+        $birthdate = trim($request->birth_date);
+        $tin = trim($request->tin);
+        $creditProspectId = trim($request->credit_prospect_id);
+        $creditProspectData = DB::table('credit_app')
+         ->leftJoin('credit_prospect', 'credit_prospect.credituid','=','credit_app.creditprospect_uuid')
+         ->where('credit_app.birth_date', $birthdate)
+         ->where('credit_app.tin', $tin)
+         ->where('credit_app.creditprospect_uuid', $creditProspectId)
+         ->first();
+        if(empty($creditProspectData)){
+                return response([
+                    'success' => 'false',
+                    'message' => 'Invalid Birthdate or TIN'
+                ],400);
+        }
+        if($request->is_existing == 1){
+            if(!empty($creditProspectData)){
+                return response([
+                    'success' => 'true',
+                    'message' => 'Data found',
+                    'app_id' => $creditProspectData->inflight_credit_app_id
+                ],200);
+            }else{
+                return response([
+                    'success' => 'false',
+                    'message' => 'Incorrect Prospect Id'
+                ],400);
+            }
+        }
+        
+    }
+
+
 }

@@ -53,4 +53,10 @@ class CreditProspectController extends Controller
       $response = $creditApp->storeDataintoSFDC($app_id);
       return $response;
     }
+
+    public function verifyViaTin(Request $request){
+      $creditApp = new CreditApp();
+      $response = $creditApp->verifyUsingTin($request);
+      return $response;    
+    }
 }
