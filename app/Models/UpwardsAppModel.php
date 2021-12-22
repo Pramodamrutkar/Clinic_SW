@@ -22,7 +22,7 @@ class UpwardsAppModel extends Model
                 'message' => 'Invalid AppID'
             ],400);
         }
-        $this->creditapp_uid = (string) Str::uuid(); 
+        $this->creditapp_uid = trim($app_id); 
         $this->upwardapp_uid = (string) Str::uuid(); 
         $this->residency_type = $request['residency_type'];
         $this->gender = $request['gender'];

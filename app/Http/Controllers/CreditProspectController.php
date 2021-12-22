@@ -47,4 +47,10 @@ class CreditProspectController extends Controller
        $response = $creditProspect->retriveUseronAppID($app_id);
        return $response;
     }
+
+    public function storeDatatoSF($app_id){
+      $creditApp = new CreditApp();
+      $response = $creditApp->storeDataintoSFDC($app_id);
+      return $response;
+    }
 }

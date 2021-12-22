@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Http\Controllers\MoneyViewApp;
-use App\Http\Controllers\UpwardsApp;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\CreditApp;
+use App\Models\CasheAppModel;
+use App\Models\UpwardsAppModel;
 use DB;
 
 class MoneyViewAppModel extends Model
@@ -64,15 +64,40 @@ class MoneyViewAppModel extends Model
                 'message' => 'Empty Application ID'
             ],400);
         }
+       
+        // $offerData = DB::table('moneyview_app')
+        // ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
+        // ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
+        // ->where('moneyview_app.creditapp_uid','=',trim($app_id))
+        // ->select('moneyview_app.lender_system_id as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','upwards_app.lender_system_id as upwardsLender','upwards_app.amount as upwardsAmount','upwards_app.mis_status as upwardsStatus','cashe_app.lender_system_id as casheLender','cashe_app.amount as casheAmount','cashe_app.mis_status as casheStatus')
+        // ->first();
+
+        $upwardsApp = UpwardsAppModel::select('upwards_app.lender_system_id as lender','upwards_app.amount as amount','upwards_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_system_id as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+        $casheApp = CasheAppModel::select('cashe_app.lender_system_id as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+    
+        $offerData = array();
+        if(!empty($upwardsApp)){
+            $offerData[] = $upwardsApp;
+        }
+        if(!empty($moneyView)){
+            $offerData[] = $moneyView;
+        }
+        if(!empty($casheApp)){
+            $offerData[] = $casheApp;
+        }
         
-        $offerData = DB::table('moneyview_app')
-        ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
-        ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
-        ->where('moneyview_app.creditapp_uid','=',trim($app_id))
-        ->select('moneyview_app.lender_system_id as moneyviewLender','moneyview_app.amount as moneyviewAmount','moneyview_app.mis_status as moneyviewStatus','upwards_app.lender_system_id as upwardsLender','upwards_app.amount as upwardsAmount','upwards_app.mis_status as upwardsStatus','cashe_app.lender_system_id as casheLender','cashe_app.amount as casheAmount','cashe_app.mis_status as casheStatus')
-        ->first();
-        
-        return $offerData;
-        
+        if(!empty($offerData)){
+            return Response([
+                'status' => 'true',
+                'message' => 'Data found',
+                'data' => $offerData
+            ],200);
+        }else{
+            return Response([
+                'status' => 'false',
+                'message' => 'No Data'
+            ],204);
+        }
     }
 }

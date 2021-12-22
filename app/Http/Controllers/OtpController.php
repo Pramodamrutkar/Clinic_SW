@@ -10,6 +10,7 @@ use App\Models\CreditProspect;
 use App\Models\Otp;
 use Mail;
 use JWTAuth;
+use DB;
 
 
 class OtpController extends Controller
@@ -26,7 +27,7 @@ class OtpController extends Controller
         $mobileNo = trim($request->mobile_phone_number);
         $emailId = trim($request->email);
         $phoneCode = trim($request->mobile_phone_code);
-        if($request->issend_toemail == 1 && empty($emailId)){
+        if ($request->issend_toemail == 1 && empty($emailId)) {
             return '{ "success" : "fail" , "message" : "Please enter email Only" }';
         }
         $otp = rand(100000, 999999);
@@ -36,9 +37,10 @@ class OtpController extends Controller
             $application_name = config('constants.application_name');
             $senderId = config('constants.sender');
 
-            $message = 'OTP for ' . $application_name . ' Registration is : ' . $otp;
+
+            $message = 'Here is your one-time password to complete your account profile with CreditLinks [CRLINK] ' . $otp;
             $flag = $this->sendMessage($senderId, $mobileNo, $message, $phoneCode);
-           
+
             if ($flag == 0) {
                 return response([
                     'success' => 'fail',
@@ -51,10 +53,11 @@ class OtpController extends Controller
             $flag = $this->sendEmail($messagePage, $emailId, $subject, $otp);
         }
         //if (is_numeric($mobileNo)) {
-            $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->orWhere('email', $emailId)->first();
+        $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->orWhere('email', $emailId)->first();
         //} else {
         //  $creditProspectdata = CreditProspect::where('email', $emailId)->first();
         //}
+        $expireTime = config('constants.otpexpire');
 
         $otpInsert = new Otp();
         $otpInsert->code = $otp;
@@ -63,11 +66,11 @@ class OtpController extends Controller
             $otpInsert->communication_mode = "EMAIL";
             $otpInsert->device_locator = $emailId;
         } else {
-            
             $otpInsert->communication_mode = "PHONE";
             $otpInsert->device_locator = $mobileNo;
         }
         $otpInsert->user_id = empty($creditProspectdata['user_id']) ? 0 : $creditProspectdata['user_id']; // primary key of credit prospect table.
+        $otpInsert->expire_otp_time = date("Y-m-d H:i:s", strtotime(date('Y-m-d H:i:s') . "$expireTime minute"));
         if ($otpInsert->save()) {
             $maskId = $this->maskEmailOrPhone($otpInsert->device_locator);
             return response([
@@ -82,36 +85,34 @@ class OtpController extends Controller
         }
     }
 
-  
+
     public function sendMessage($senderId, $mobileNo, $message, $phoneCode)
     {
 
         $authKey = config('constants.authkey');
+        $peId = config('constants.pe_idEntityId');
+        $templateId = config('constants.templateId');
+
+        $url = "https://api.authkey.io/request?authkey=$authKey&mobile=$mobileNo&country_code=$phoneCode&sms=$message&sender=$senderId&pe_id=$peId&template_id=$templateId";
+
         $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.authkey.io/request?authkey=$authKey&mobile=$mobileNo&
-            country_code=$phoneCode&sms=$message&sender=$senderId",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
+            CURLOPT_URL => $url,
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "GET",
         ));
-
         $response = curl_exec($curl);
-        $err = curl_error($curl);
 
+        $err = curl_error($curl);
         curl_close($curl);
+        $result = json_decode($response, true);
 
         if ($err) {
-            //echo "cURL Error #:" . $err;
-            return 0;
+            echo "cURL Error #:" . $err;
         } else {
-            return $response;
-            //return 1;
+            dd($response);
         }
-    }   
+    }
 
     public function sendEmail($messagePage, $toEmail, $subject, $otp, $attachment = '')
     {
@@ -140,11 +141,12 @@ class OtpController extends Controller
         $deviceLocator = trim($request->device_locator);
         $expiry = config('constants.otpexpire'); //defined in constants.php file
 
-        $expiryTime = date('Y-m-d H:i:s',strtotime("-".$expiry));
-        $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('created_at', '>=', $expiryTime)->count();
+        $expiryTime = date('Y-m-d H:i:s');
+
+        $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('expire_otp_time', '>=', $expiryTime)->get()->count();
 
         if ($checkOtp > 0) {
-           //token generation
+            //token generation
             try {
                 if (!$token = JWTAuth::attempt($credentials)) {
                     return response()->json([
@@ -188,14 +190,14 @@ class OtpController extends Controller
         //     return response()->json(['error' => $validator->messages()], 200);
         // }
 
-		//Request is validated, do logout        
+        //Request is validated, do logout        
         try {
             JWTAuth::invalidate($request->token);
- 
+
             return response()->json([
                 'success' => true,
                 'message' => 'User has been logged out'
-            ],200);
+            ], 200);
         } catch (JWTException $exception) {
             return response()->json([
                 'success' => false,
@@ -226,54 +228,60 @@ class OtpController extends Controller
     }
 
 
-    public function storeBasicDetails(Request $request){
-        $creditProspectUpdate = CreditProspect::where('mobile_phone_number',$request->mobile_phone_number)->orWhere('email',$request->email)->first();
-     
-        if(!empty($creditProspectUpdate)){
+    public function storeBasicDetails(Request $request)
+    {
+
+        $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+
+        $merchantData = DB::table('merchant')
+            ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
+            ->where('merchant.url_segment', trim($request->url_segment))
+            ->first();
+
+        if (!empty($creditProspectUpdate)) {
             $creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
-            $creditProspectUpdate->channel_id = $request['channel_id'];
             $creditProspectUpdate->email = $request['email'];
             $creditProspectUpdate->mobile_phone_code = $request['mobile_phone_code'];
             $creditProspectUpdate->mobile_phone_number = $request['mobile_phone_number'];
             $creditProspectUpdate->role_id = 1;
-            if($creditProspectUpdate->save()){
-               // return $creditProspectUpdate->credituid;
+            if ($creditProspectUpdate->save()) {
+                // return $creditProspectUpdate->credituid;
                 return response([
                     'success' => 'true',
                     'message' => 'Added Record Successfully!',
                     'app_id' => $creditProspectUpdate->credituid
 
-                ],200);
-            }else{
+                ], 200);
+            } else {
                 return response([
                     'success' => 'false',
                     'message' => 'something went wrong!'
-                ],400);
+                ], 400);
             }
-        }else{
+        } else {
             $obj  = new CreditProspect();
             $obj->credituid = (string) Str::uuid();
-            $obj->channel_id = $request['channel_id'];
+            $obj->channel_id = $merchantData->channel;
             $obj->email = $request['email'];
             $obj->mobile_phone_code = $request['mobile_phone_code'];
             $obj->mobile_phone_number = $request['mobile_phone_number'];
-            $obj->merchant_tracking_id = $request['merchant_tracking_id'];
-            $obj->merchant_location_id = $request['merchant_location_id'];
+            $obj->merchant_tracking_id = empty($merchantData->merchant_uid) ? "" : $merchantData->merchant_uid;
+            $obj->merchant_name = empty($merchantData->name) ? "" : $merchantData->name;
+            $obj->merchant_location_id = empty($merchantData->merchant_location_uid) ? "" : $merchantData->merchant_location_uid;
             $obj->role_id = 1;
-            if($obj->save()){
+            if ($obj->save()) {
                 //return $obj->credituid;
                 return response([
                     'success' => 'true',
                     'message' => 'Added Record Successfully!',
                     'app_id' => $obj->credituid
-                ],200);
-            }else{
+                ], 200);
+            } else {
                 return response([
                     'success' => 'false',
                     'message' => 'something went wrong!'
-                ],400);
+                ], 400);
             }
         }
-        
-    }   
+    }
 }

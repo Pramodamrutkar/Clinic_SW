@@ -26,7 +26,7 @@ Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
 
-
+//Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
