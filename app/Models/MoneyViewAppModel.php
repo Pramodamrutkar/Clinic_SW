@@ -19,7 +19,9 @@ class MoneyViewAppModel extends Model
     public $timestamps = true;
 
     public function saveMoneyView($request,$app_id){
+        
         $creditAppIdCount = CreditApp::where('creditapp_uuid',$app_id)->count();
+       
         if($creditAppIdCount != 1){
             return Response([
                 'status' => 'fail',
@@ -40,10 +42,11 @@ class MoneyViewAppModel extends Model
         $this->emi = $request['emi'];
         $this->annual_interest_rate = $request['annual_interest_rate'];
         $this->term_months = $request['term_months'];
-        $this->mis_status = $request['mis_status'];
+       // $this->mis_status = $request['mis_status'];
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->lender_created = $request['lender_created'];
         $this->processing_fees = $request['processing_fees'];
+      
         if($this->save()){
             return Response([
                 'status' => 'true',

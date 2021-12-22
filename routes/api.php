@@ -27,13 +27,14 @@ Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 
+    Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
+
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
-    Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
     Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
     Route::get('/user/{app_id}',[CreditProspectController::class, 'userDetails']);
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);

@@ -53,21 +53,38 @@ class FormulaBuilderEngineController extends Controller
 			AND (offer_key = "employeement_type" AND offer_min_number = "'.$employeementStatus.'" AND status = 1)');
 		} */
 		
-		$offerName = DB::select('SELECT offer_name FROM `formula_builder_engine` 
+		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` 
 		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
 		UNION ALL
-		SELECT offer_name FROM `formula_builder_engine`
+		SELECT offer_name,lender_name FROM `formula_builder_engine`
 		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
 		AND (offer_key = "age" AND offer_min_number <= "'.$age.'" AND offer_max_number >= "'.$age.'" AND status = 1) 
 		AND (offer_key = "City_Tier" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
 		AND (offer_key = "employeement_type" AND offer_min_number = "'.$employeementStatus.'" AND status = 1)');
-
-	
+		
+		$lendersMainArray = array();
 		foreach($offerName as $value)
 		{
 			$new_arr[] = $value->offer_name;
-		}								
-								
+			$lender_name[] = $value->lender_name;
+			if($value->lender_name == 'upward'){
+				$lendersMainArray[$value->lender_name][] = $value->offer_name;
+			}else if($value->lender_name == 'MoneyView'){
+				$lendersMainArray[$value->lender_name][] = $value->offer_name;
+			}else if($value->lender_name == 'cache_app'){
+				$lendersMainArray[$value->lender_name][] = $value->offer_name;
+			}
+		}		
+	
+		if(empty($new_arr))
+		{
+			return [];
+		}
+		else if(!empty($new_arr))
+		{
+			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
+		}
+		
 		//DB::connection()->enableQueryLog();
 		//dd(DB::getQueryLog());	
 		
@@ -157,7 +174,7 @@ class FormulaBuilderEngineController extends Controller
 			
 				foreach($val as $key2 => $data_test)
 				{									
-					$push_data = array('offer_amount' => $data_test[0]);
+					$push_data = array('offer_amount' => round($data_test[0]));
 					$push_data += array('calculated_amount_offer' => $data_test[1]);
 					$push_data += array('roi_offer' => $data_test[2]);
 					$push_data += array('tenure_offer' => $data_test[3]);
@@ -223,7 +240,7 @@ class FormulaBuilderEngineController extends Controller
 						unset($getData[$key]['offer_pf_3']);
 					}
 				}
-															
+				
         return $getData;
     }
 	
@@ -237,6 +254,75 @@ class FormulaBuilderEngineController extends Controller
 		}
 		
 		return $result;
+	}
+	
+	function updateKnockoutLender($creditAppUUID, $new_arr)
+	{
+		$new_arr_str = implode(', ', $new_arr);
+		$affected = DB::table('credit_app')
+              ->where('creditapp_uuid', $creditAppUUID)
+              ->update(['knockout_lenders' => $new_arr_str]);
+	}
+	
+	function checkIfUserConsumedOffer($creditAppUUID, $arrLender, $lender_name,$lendersMainArray)
+	{
+		$arr = $arrLender;
+		if(in_array('upward',$lender_name))
+		{
+			$upwardData = DB::table('upwards_app')
+				->select('*')
+				->where('creditapp_uid',$creditAppUUID)
+				->get();
+			$upwardData = $upwardData->count();
+			if(!empty($upwardData))
+			{	
+				foreach ($lendersMainArray['upward'] as $key1 => $value) {
+					if (($key = array_search($value, $arr)) !== false) {
+						unset($arr[$key]);
+					}
+				}
+			}
+
+		}
+		
+		if(in_array('MoneyView',$lender_name))
+		{
+			$moneyviewData =DB::table('moneyview_app')
+			->select('*')
+			->where('creditapp_uid',$creditAppUUID)
+			->get();
+			$moneyviewData = $moneyviewData->count();
+			if(!empty($moneyviewData))
+			{
+				foreach ($lendersMainArray['MoneyView'] as $key1 => $value) {
+					if (($key = array_search($value, $arr)) !== false) {
+						unset($arr[$key]);
+					}
+				}
+			}
+
+		}
+
+		if(in_array('cashe_app',$lender_name))
+		{
+			$casheData =DB::table('cashe_app')
+			->select('*')
+			->where('creditapp_uid',$creditAppUUID)
+			->get();
+			$casheData = $casheData->count();
+			if(!empty($casheData))
+			{	
+				foreach ($lendersMainArray['cashe_app'] as $key1 => $value) {
+					if (($key = array_search($arr, $value)) !== false) {
+						unset($arr[$key]);
+					}
+				}
+			}
+		}
+	
+		return $arr;
+		
+
 	}
 	 
 }
