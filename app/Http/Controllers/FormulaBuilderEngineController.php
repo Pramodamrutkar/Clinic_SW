@@ -60,7 +60,7 @@ class FormulaBuilderEngineController extends Controller
 		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
 		AND (offer_key = "age" AND offer_min_number <= "'.$age.'" AND offer_max_number >= "'.$age.'" AND status = 1) 
 		AND (offer_key = "City_Tier" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
-		AND (offer_key = "employeement_type" AND offer_min_number = "'.$employeementStatus.'" AND status = 1)');
+		AND (offer_key = "employeement_type" AND offer_number = "'.$employeementStatus.'" AND status = 1)');
 		
 		$lendersMainArray = array();
 		foreach($offerName as $value)

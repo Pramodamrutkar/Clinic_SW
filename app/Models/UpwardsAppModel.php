@@ -43,7 +43,7 @@ class UpwardsAppModel extends Model
         $this->emi = $request['emi'];
         $this->annual_interest_rate = $request['annual_interest_rate'];
         $this->term_months = $request['term_months'];
-        $this->mis_status = $request['mis_status'];
+        //$this->mis_status = $request['mis_status'];
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->leder_created = $request['leder_created'];
         $this->processing_fees = $request['processing_fees'];
