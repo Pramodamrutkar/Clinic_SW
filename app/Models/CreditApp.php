@@ -64,8 +64,11 @@ class CreditApp extends Model
             $creditAppData->knockout_lenders = $request['knockout_lenders'];
             $creditAppData->submission = $request['submission'];
             if ($creditAppData->save()) {
-                //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
-                return response([
+                $statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
+                if($statusOnOff == 1){
+                    $this->storeDataintoSFDC($creditAppData->creditapp_uuid);  //code to save data into salesforce
+                }
+                 return response([
                     'success' => 'true',
                     'message' => 'Record Updated Successfully!',
                     'app_id' => $creditAppData->creditapp_uuid 
@@ -112,7 +115,10 @@ class CreditApp extends Model
             $this->knockout_lenders = $request['knockout_lenders'];
             $this->submission = $request['submission'];
             if ($this->save()) {
-                //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
+                $statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
+                if($statusOnOff == 1){
+                    $this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
+                }
                 return response([
                     'success' => 'true',
                     'message' => 'Added Record Successfully!',
