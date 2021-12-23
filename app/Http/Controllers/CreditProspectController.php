@@ -59,4 +59,11 @@ class CreditProspectController extends Controller
       $response = $creditApp->verifyUsingTin($request);
       return $response;    
     }
+
+    public function returnUserProfile($app_id){
+      $creditAppUser = new CreditApp();
+      $userResponse = $creditAppUser->profileUser($app_id);
+      return $userResponse;
+    }
+
 }

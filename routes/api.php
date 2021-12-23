@@ -24,18 +24,22 @@ Route::post('/apply-loan', [OtpController::class, 'storeBasicDetails']);
 Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
-Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 
-    Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
-
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
+
+
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
     Route::post('/save-smartlist', [SmartListController::class, 'store']);
     Route::get('/smartlist', [SmartListController::class, 'index']);
+    Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
     Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
+    //we are using prospect id user/{app_id}
     Route::get('/user/{app_id}',[CreditProspectController::class, 'userDetails']);
+    //we are using creditapp_uid id user/{app_id}
+    Route::post('/return-user/{app_id}',[CreditProspectController::class, 'returnUserProfile']);
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
+    Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
 });

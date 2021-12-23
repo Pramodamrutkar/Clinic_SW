@@ -21,52 +21,109 @@ class CreditApp extends Model
 
     public function savePersonalInformationiInApp($request)
     {   
-        $this->creditapp_uuid = (string) Str::uuid();
-        $creditProspectUuid = $this->saveCreditProspectData($request,$this->creditapp_uuid);
-        $this->creditprospect_uuid = $creditProspectUuid;
-        $this->first_name = $request['first_name'];
-        $this->middle_name = $request['middle_name'];
-        $this->last_name = $request['last_name'];
-        $this->birth_date = $request['birth_date'];
-        $this->tin = $request['tin'];
-        $this->email = $request['email'];
-        $this->mobile_phone_number = $request['mobile_phone_number'];
-        $this->address1 = $request['address1'];
-        $this->address2 = $request['address2'];
-        $this->address3 = $request['address3'];
-        $this->city = $request['city'];
-        $this->state = $request['state'];
-        $this->postal_code = $request['postal_code'];
-        $this->country = $request['country'];
-        $this->employment_status_code = $request['employment_status_code'];
-        $this->annual_income = $request['annual_income'];
-        $this->credit_amount = $request['credit_amount'];
-        $this->currency_code = empty($request['currency_code']) ? 'INR' : $request['currency_code'];
-        $this->marketing_consent = $request['marketing_consent'];
-        $this->allow_emails = $request['allow_emails'];
-        $this->allow_sms = $request['allow_sms'];
-        $this->submitted = $request['submitted'];
-        $this->readings = $request['readings'];
-        $this->autosaved = $request['autosaved'];
-        $this->attempts = $request['attempts'];
-        $this->when_last_attempted = $request['when_last_attempted'];
-        $this->timeout_resets = $request['timeout_resets'];
-        $this->servicing_system_id = $request['servicing_system_id'];
-        $this->monthly_income = empty($request['monthly_income']) ? round($request['annual_income'] / 12) : $request['monthly_income'];
-        $this->knockout_lenders = $request['knockout_lenders'];
-        $this->submission = $request['submission'];
-        if ($this->save()) {
-            //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
-            return response([
-                'success' => 'true',
-                'message' => 'Added Record Successfully!',
-                'app_id' => $this->creditapp_uuid
-            ], 200);
-        } else {
-            return response([
-                'success' => 'false',
-                'message' => 'something went wrong!'
-            ], 400);
+        //update on return profile
+        if(!empty($request->creditapp_uid)){
+            $creditAppData = CreditApp::where('creditapp_uuid',trim($request->creditapp_uid))->first();
+            if(empty($creditAppData)){
+                return response([
+                    'success' => 'false',
+                    'message' => 'Invalid App ID'
+                ], 400);
+            }
+            $creditAppData->creditapp_uuid = $request->creditapp_uid;
+            $creditAppData->creditprospect_uuid = $creditAppData->creditprospect_uuid;
+            $creditAppData->first_name = $request['first_name'];
+            $creditAppData->middle_name = $request['middle_name'];
+            $creditAppData->last_name = $request['last_name'];
+            $creditAppData->birth_date = $request['birth_date'];
+            $creditAppData->tin = $request['tin'];
+            $creditAppData->email = $request['email'];
+            $creditAppData->mobile_phone_number = $request['mobile_phone_number'];
+            $creditAppData->address1 = $request['address1'];
+            $creditAppData->address2 = $request['address2'];
+            $creditAppData->address3 = $request['address3'];
+            $creditAppData->city = $request['city'];
+            $creditAppData->state = $request['state'];
+            $creditAppData->postal_code = $request['postal_code'];
+            $creditAppData->country = $request['country'];
+            $creditAppData->employment_status_code = $request['employment_status_code'];
+            $creditAppData->annual_income = $request['annual_income'];
+            $creditAppData->credit_amount = $request['credit_amount'];
+            $creditAppData->currency_code = empty($request['currency_code']) ? 'INR' : $request['currency_code'];
+            $creditAppData->marketing_consent = $request['marketing_consent'];
+            $creditAppData->allow_emails = $request['allow_emails'];
+            $creditAppData->allow_sms = $request['allow_sms'];
+            $creditAppData->submitted = empty($request['submitted']) ? 1 : $request['submitted'];
+            $creditAppData->readings = $request['readings'];
+            $creditAppData->autosaved = $request['autosaved'];
+            $creditAppData->attempts = $request['attempts'];
+            $creditAppData->when_last_attempted = $request['when_last_attempted'];
+            $creditAppData->timeout_resets = $request['timeout_resets'];
+            $creditAppData->servicing_system_id = $request['servicing_system_id'];
+            $creditAppData->monthly_income = empty($request['monthly_income']) ? round($request['annual_income'] / 12) : $request['monthly_income'];
+            $creditAppData->knockout_lenders = $request['knockout_lenders'];
+            $creditAppData->submission = $request['submission'];
+            if ($creditAppData->save()) {
+                //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
+                return response([
+                    'success' => 'true',
+                    'message' => 'Record Updated Successfully!',
+                    'app_id' => $creditAppData->creditapp_uuid 
+                ], 200);
+            } else {
+                return response([
+                    'success' => 'false',
+                    'message' => 'something went wrong!'
+                ], 400);
+            }
+        }else{
+            $this->creditapp_uuid = (string) Str::uuid();
+            $creditProspectUuid = $this->saveCreditProspectData($request,$this->creditapp_uuid);
+            $this->creditprospect_uuid = $creditProspectUuid;
+            $this->first_name = $request['first_name'];
+            $this->middle_name = $request['middle_name'];
+            $this->last_name = $request['last_name'];
+            $this->birth_date = $request['birth_date'];
+            $this->tin = $request['tin'];
+            $this->email = $request['email'];
+            $this->mobile_phone_number = $request['mobile_phone_number'];
+            $this->address1 = $request['address1'];
+            $this->address2 = $request['address2'];
+            $this->address3 = $request['address3'];
+            $this->city = $request['city'];
+            $this->state = $request['state'];
+            $this->postal_code = $request['postal_code'];
+            $this->country = $request['country'];
+            $this->employment_status_code = $request['employment_status_code'];
+            $this->annual_income = $request['annual_income'];
+            $this->credit_amount = $request['credit_amount'];
+            $this->currency_code = empty($request['currency_code']) ? 'INR' : $request['currency_code'];
+            $this->marketing_consent = $request['marketing_consent'];
+            $this->allow_emails = $request['allow_emails'];
+            $this->allow_sms = $request['allow_sms'];
+            $this->submitted = empty($request['submitted']) ? 1 : $request['submitted'];
+            $this->readings = $request['readings'];
+            $this->autosaved = $request['autosaved'];
+            $this->attempts = $request['attempts'];
+            $this->when_last_attempted = $request['when_last_attempted'];
+            $this->timeout_resets = $request['timeout_resets'];
+            $this->servicing_system_id = $request['servicing_system_id'];
+            $this->monthly_income = empty($request['monthly_income']) ? round($request['annual_income'] / 12) : $request['monthly_income'];
+            $this->knockout_lenders = $request['knockout_lenders'];
+            $this->submission = $request['submission'];
+            if ($this->save()) {
+                //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
+                return response([
+                    'success' => 'true',
+                    'message' => 'Added Record Successfully!',
+                    'app_id' => $this->creditapp_uuid
+                ], 200);
+            } else {
+                return response([
+                    'success' => 'false',
+                    'message' => 'something went wrong!'
+                ], 400);
+            }
         }
     }
 
@@ -237,5 +294,23 @@ class CreditApp extends Model
         
     }
 
+
+    public function profileUser($app_id){
+        if(!empty($app_id)){
+            $creditAppData = CreditApp::where('creditapp_uuid',trim($app_id))->first();
+            if(!empty($creditAppData)){
+                return response([
+                    'success' => 'true',
+                    'data' => $creditAppData
+                ], 200);
+            }else{
+                return response([
+                    'success' => 'true',
+                    'message' => 'Invalid App Id. No data found'
+                ], 400);
+            }
+            
+        }
+    }
 
 }

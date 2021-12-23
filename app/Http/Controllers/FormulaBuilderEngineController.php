@@ -240,7 +240,7 @@ class FormulaBuilderEngineController extends Controller
 						unset($getData[$key]['offer_pf_3']);
 					}
 				}
-				
+				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
         return $getData;
     }
 	
@@ -256,9 +256,9 @@ class FormulaBuilderEngineController extends Controller
 		return $result;
 	}
 	
-	function updateKnockoutLender($creditAppUUID, $new_arr)
+	function updateKnockoutLender($creditAppUUID, $lender_name)
 	{
-		$new_arr_str = implode(', ', $new_arr);
+		$new_arr_str = implode(', ', $lender_name);
 		$affected = DB::table('credit_app')
               ->where('creditapp_uuid', $creditAppUUID)
               ->update(['knockout_lenders' => $new_arr_str]);
