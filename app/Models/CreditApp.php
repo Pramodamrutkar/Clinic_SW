@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\CreditProspect;
+use App\Models\ExternalConnectorsModel;
 use DB;
 
 class CreditApp extends Model
@@ -319,4 +320,5 @@ class CreditApp extends Model
         }
     }
 
+    
 }

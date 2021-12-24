@@ -18,4 +18,17 @@ class UpwardsApp extends Controller
         $response = $upwardsApp->saveUpwardsDetails($request,$app_id);
         return $response;
     }
+
+       //upward testing 
+    public function checkUpwardEligible(Request $request){
+        $upwardsAppModel = new UpwardsAppModel();
+        $response = $upwardsAppModel->checkUpwardsEligibility($request);
+        return $response;
+     }
+
+     public function upwardAccessToken(){
+        $upwardsAppModel = new UpwardsAppModel();
+        $response = $upwardsAppModel->getUpwardAccessToken();
+        return $response;
+     }
 }

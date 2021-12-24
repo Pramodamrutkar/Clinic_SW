@@ -104,4 +104,6 @@ class MoneyViewAppModel extends Model
             ],204);
         }
     }
+
+    
 }

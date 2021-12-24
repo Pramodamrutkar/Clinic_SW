@@ -61,5 +61,68 @@ class UpwardsAppModel extends Model
         }
     }
 
+
+    public function checkUpwardsEligibility($email,$pan){
+        //$pan = trim($request->pan);
+        //$email = trim($request->social_email_id);
+        $params = array(
+            "pan" => $pan,
+            "social_email_id" => $email
+        );
+        $upwardTokenData = $this->getUpwardAccessToken();
+        $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
+        $affiliated_user_id = $upwardTokenData['data']['affiliated_user_id'];
+                
+        $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
+        $appendTo = "v1/customer/loan/eligibility/";
+        $url = $upwardApiBaseUrl.$appendTo;
+        $curl = curl_init();
+        $string = json_encode($params);
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $string,
+            CURLOPT_HTTPHEADER => array(
+              "Affiliated-User-Id: $affiliated_user_id",
+              "Affiliated-User-Session-Token: $accessToken",
+              "Content-Type: application/json"
+            ),
+          ));
+          $json_response = curl_exec($curl);
+          $response = json_decode($json_response, true);
+          curl_close($curl);
+          return $response;  
+    } 
+    
+    public function getUpwardAccessToken(){
+        $AffiliatedUserId = config('constants.upwardAffiliatedUserId');
+        $Secret = config('constants.upwardSecret');
+        $params = array(
+            'affiliated_user_id' => $AffiliatedUserId,
+            'affiliated_user_secret' => $Secret
+        );
+        $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
+        $appendTo = "v1/authenticate/";
+        $url = $upwardApiBaseUrl.$appendTo;
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+        $json_response = curl_exec($curl);
+        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if ($status != 200) {
+            die("Error: call to token URL $url failed with status $status, response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
+        }
+        curl_close($curl);
+        $response = json_decode($json_response, true);
+       
+        return $response;
+    }
     
 }

@@ -8,8 +8,6 @@ use Illuminate\Http\Request;
 class MoneyViewApp extends Controller
 {
     /**
-     * send a otp to request mobile no or email.
-     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
@@ -24,4 +22,6 @@ class MoneyViewApp extends Controller
         $response = $moneyViewApp->listOfferChart($app_id);
         return $response;
     }
+
+  
 }
