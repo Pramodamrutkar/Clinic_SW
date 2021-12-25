@@ -93,24 +93,30 @@ class OtpController extends Controller
         $peId = config('constants.pe_idEntityId');
         $templateId = config('constants.templateId');
 
-        $url = "https://api.authkey.io/request?authkey=$authKey&mobile=$mobileNo&country_code=$phoneCode&sms=$message&sender=$senderId&pe_id=$peId&template_id=$templateId";
-
+        $str = "authkey=" . $authKey . "&mobile=" . $mobileNo . "&country_code=" . $phoneCode . "&sms=" . $message . "&sender=" . $senderId . "&pe_id=" . $peId . "&template_id=" . $templateId;
+        $url1 = "https://api.authkey.io/request?" . $str;
+        $url = str_replace(' ', '%20', $url1);
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
         ));
-        $response = curl_exec($curl);
 
+        $response = curl_exec($curl);
         $err = curl_error($curl);
         curl_close($curl);
-        $result = json_decode($response, true);
-
         if ($err) {
-            echo "cURL Error #:" . $err;
+            //echo "cURL Error #:" . $err;
+            return 0;
         } else {
-            dd($response);
+            //echo $response;
+            return 1;
         }
     }
 
@@ -118,7 +124,6 @@ class OtpController extends Controller
     {
 
         $data = array("otp" => $otp, "toEmail" => $toEmail, "subject" => $subject, 'attachment' => $attachment);
-
         Mail::send($messagePage, $data, function ($message) use ($data) {
             $message->to($data['toEmail'])->subject($data['subject']);
             $message->from('noreply@creditlinks.in', 'CreditLinks');
@@ -140,18 +145,18 @@ class OtpController extends Controller
         $otp = trim($request->code);
         $deviceLocator = trim($request->device_locator);
         $creditProspectId = trim($request->credit_prospect_id);
-        if(empty($creditProspectId)){
+        if (empty($creditProspectId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid Prospect ID',
             ], 400);
         }
         $expiryTime = date('Y-m-d H:i:s');
-        
+
         $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('expire_otp_time', '>=', $expiryTime)->get()->count();
 
-        $creditProspectdata = CreditProspect::where('credituid',$creditProspectId)->first();
-        if(empty($creditProspectdata)){
+        $creditProspectdata = CreditProspect::where('credituid', $creditProspectId)->first();
+        if (empty($creditProspectdata)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid Prospect Data',
@@ -245,7 +250,7 @@ class OtpController extends Controller
     {
 
         $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
-        
+
         $merchantData = DB::table('merchant')
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
             ->where('merchant.url_segment', trim($request->url_segment))

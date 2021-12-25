@@ -9,6 +9,8 @@ use App\Models\Locations;
 use App\Models\Offers;
 use App\Models\OfferWeightage;
 use App\Models\CreditApp;
+use App\Models\UpwardsAppModel;
+use App\Models\ExternalConnectorsModel;
 use DateTime;
 use DB;
 class FormulaBuilderEngineController extends Controller
@@ -30,6 +32,9 @@ class FormulaBuilderEngineController extends Controller
 		$postalCode = $CreditAppData->postal_code;
 		$employeementStatus = $CreditAppData->employment_status_code;
 		
+		$emailId = $CreditAppData->email;
+		$panId = $CreditAppData->tin;
+
 		$from = new DateTime($birthDate);
 		$to   = new DateTime('today');
 		$age  = $from->diff($to)->y;
@@ -81,10 +86,21 @@ class FormulaBuilderEngineController extends Controller
 			return [];
 		}
 		else if(!empty($new_arr))
-		{
+		{	
+			$statusOnOff = ExternalConnectorsModel::externalConnects('CALLTOUPWARDS');
+			if($statusOnOff == 1){
+				$upwardModel =new UpwardsAppModel();
+				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
+				if($upwardData["data"]["is_eligible"] != true){
+					for($i=0;$i < count($new_arr); $i++){
+						if(stripos($new_arr[$i],"upward") == 0){
+							unset($new_arr[$i]);
+						}
+					}	
+				}
+			}			
 			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
 		}
-		
 		//DB::connection()->enableQueryLog();
 		//dd(DB::getQueryLog());	
 		

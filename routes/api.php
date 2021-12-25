@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CasheApp;
 use App\Http\Controllers\CreditProspectController;
 use App\Http\Controllers\MoneyViewApp;
 use App\Http\Controllers\OtpController;
@@ -27,7 +28,9 @@ Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
-
+//Route::post('/upward-eligibility', [UpwardsApp::class,'checkUpwardEligible']);
+//Route::post('/upward-token', [UpwardsApp::class,'upwardAccessToken']);
+Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);

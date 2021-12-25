@@ -65,5 +65,4 @@ class CreditProspectController extends Controller
       $userResponse = $creditAppUser->profileUser($app_id);
       return $userResponse;
     }
-
 }
