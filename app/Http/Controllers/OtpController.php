@@ -262,6 +262,8 @@ class OtpController extends Controller
             $creditProspectUpdate->mobile_phone_code = $request['mobile_phone_code'];
             $creditProspectUpdate->mobile_phone_number = $request['mobile_phone_number'];
             $creditProspectUpdate->role_id = 1;
+            $creditProspectUpdate->is_consent_accept = $request['is_consent_accept'];
+            $creditProspectUpdate->is_remind_me_later = $request['is_remind_me_later'];
             if ($creditProspectUpdate->save()) {
                 // return $creditProspectUpdate->credituid;
                 return response([
@@ -286,6 +288,8 @@ class OtpController extends Controller
             $obj->merchant_tracking_id = empty($merchantData->merchant_uid) ? "" : $merchantData->merchant_uid;
             $obj->merchant_name = empty($merchantData->name) ? "" : $merchantData->name;
             $obj->merchant_location_id = empty($merchantData->merchant_location_uid) ? "" : $merchantData->merchant_location_uid;
+            $obj->is_consent_accept = $request['is_consent_accept'];
+            $obj->is_remind_me_later = $request['is_remind_me_later'];
             $obj->role_id = 1;
             if ($obj->save()) {
                 //return $obj->credituid;
