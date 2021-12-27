@@ -36,8 +36,7 @@ class UpwardsAppModel extends Model
         $this->bank_account_holder_name = $request['bank_account_holder_name'];
         $this->ifsc = $request['ifsc'];
         $this->loan_purpose = $request['loan_purpose'];
-        $this->lender_customer_id = $request['lender_customer_id'];
-        $this->lender_system_id = $request['lender_system_id'];
+       
         $this->Iframe_url = $request['Iframe_url'];
         $this->amount = $request['amount'];
         $this->emi = $request['emi'];
@@ -45,10 +44,15 @@ class UpwardsAppModel extends Model
         $this->term_months = $request['term_months'];
         //$this->mis_status = $request['mis_status'];
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
-        $this->leder_created = $request['leder_created'];
+        $this->lender_created = $request['lender_created'];
         $this->processing_fees = $request['processing_fees'];
 
-        $this->getandStoreUpwardsInfo($this);
+        $result = $this->getandStoreUpwardsInfo($this);
+        $lenderCustomerId = $result["data"]["loan_data"]["customer_id"];
+        $lenderSystemId = $result["data"]["loan_data"]["loan_id"];
+        
+        $this->lender_customer_id = $lenderCustomerId;
+        $this->lender_system_id = $lenderSystemId;
         if($this->save()){
             return Response([
                 'status' => 'true',
@@ -136,29 +140,29 @@ class UpwardsAppModel extends Model
             "last_name" => $creditAppData["last_name"],
             "is_partial_data" => false,
             "pan" => $creditAppData["tin"],
-            "gender" => $creditAppData["gender"],
+            "gender" => $data["gender"],
             "dob" => $creditAppData["birth_date"],
-            "social_email_id" => $creditAppData["last_name"],
-            "work_email_id" => $creditAppData["last_name"],
-            "mobile_number1" => $creditAppData["last_name"],
-            "company" => $creditAppData["last_name"],
-            "employment_status_id" => $creditAppData["last_name"],
-            "salary_payment_mode_id" => $creditAppData["last_name"],
-            "profession_type_id" => $creditAppData["last_name"],
-            "total_work_experience_category_id" => $creditAppData["last_name"],
-            "salary" => $creditAppData["last_name"],
-            "bank_account_number" => $creditAppData["last_name"],
-            "bank_account_holder_full_name" => $creditAppData["last_name"],
-            "ifsc" => $creditAppData["last_name"],
-            "current_residence_type_id" => $creditAppData["last_name"],
-            "current_address_line1" => $creditAppData["last_name"],
-            "current_address_line2" => $creditAppData["last_name"],
-            "current_pincode" => $creditAppData["last_name"],
-            "current_city" => $creditAppData["last_name"],
-            "current_state" => $creditAppData["last_name"],
-            "current_residence_stay_category_id" => $creditAppData["last_name"],
-            "loan_purpose_id" => $creditAppData["last_name"],
-            "current_employment_tenure_category_id" => $creditAppData["last_name"]
+            "social_email_id" => $creditAppData["email"],
+            "work_email_id" => $creditAppData["email"],
+            "mobile_number1" => $creditAppData["mobile_phone_number"],
+            "company" => $data["company"],
+            "employment_status_id" => $creditAppData["employment_status_code"],
+            "salary_payment_mode_id" => $data["salary_payment_mode"],
+            "profession_type_id" => $data["profession_type"],
+            "total_work_experience_category_id" => $data["total_work_experience"],
+            "salary" => $creditAppData["monthly_income"],
+            "bank_account_number" => $data["bank_account_number"],
+            "bank_account_holder_full_name" => $data["bank_account_holder_name"],
+            "ifsc" => $data["ifsc"],
+            "current_residence_type_id" => $data["residency_type"],
+            "current_address_line1" => $creditAppData["address1"],
+            "current_address_line2" => $creditAppData["address2"],
+            "current_pincode" => $creditAppData["postal_code"],
+            "current_city" => $creditAppData["city"],
+            "current_state" => $creditAppData["state"],
+            "current_residence_stay_category_id" => $data["current_residency_stay_category"],
+            "loan_purpose_id" => $data["loan_purpose"],
+            "current_employment_tenure_category_id" => $data["current_employment_tenure"]
         );
 
         $upwardTokenData = $this->getUpwardAccessToken();
