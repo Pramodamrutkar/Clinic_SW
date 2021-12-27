@@ -42,10 +42,6 @@ class FormulaBuilderEngineController extends Controller
 	
         $locationData = Locations::where('postal_code', $postalCode )->first();
 		
-		if($monthlyIncome <= 20000)
-		{
-			return [];
-		}
 		
 		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` 
 		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');		
