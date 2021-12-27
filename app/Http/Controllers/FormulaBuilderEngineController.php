@@ -46,29 +46,49 @@ class FormulaBuilderEngineController extends Controller
 		{
 			return [];
 		}
-		/* if($monthlyIncome > 30001)
-		{
-			$offerName = DB::select('SELECT offer_name FROM `formula_builder_engine` 
-			where (offer_key = "amount" AND offer_number >= 30001 AND status = 1)
-			UNION ALL
-			SELECT offer_name FROM `formula_builder_engine`
-			where (offer_key = "amount" AND offer_number >= 30001 AND status = 1)
-			AND (offer_key = "age" AND offer_min_number <= "'.$age.'" AND offer_max_number >= "'.$age.'" AND status = 1) 
-			AND (offer_key = "City_Tier" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
-			AND (offer_key = "employeement_type" AND offer_min_number = "'.$employeementStatus.'" AND status = 1)');
-		} */
 		
 		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` 
-		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
-		UNION ALL
-		SELECT offer_name,lender_name FROM `formula_builder_engine`
-		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)
-		AND (offer_key = "age" AND offer_min_number <= "'.$age.'" AND offer_max_number >= "'.$age.'" AND status = 1) 
-		AND (offer_key = "City_Tier" AND offer_min_number = "'.$locationData->city_tier.'" AND status = 1)
-		AND (offer_key = "employeement_type" AND offer_number = "'.$employeementStatus.'" AND status = 1)');
+		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');		
+
+	
+		foreach($offerName as $v1)
+		{
+			$new_arr_1[] = $v1->offer_name;
+		}
+
+		$offerName1 =DB::table('formula_builder_engine')
+					->select('offer_name','lender_name')
+					->whereIn('offer_name',$new_arr_1)
+					->where(['offer_key'=>'City_Tier','offer_number'=>$locationData->city_tier,'status'=>'1'])					
+					->get();
+			
+		foreach($offerName1 as $v2)
+		{
+			$new_arr_2[] = $v2->offer_name;
+		}
+
+		$offerName2 =DB::table('formula_builder_engine')
+			->select('offer_name','lender_name')
+			->whereIn('offer_name',$new_arr_2)
+			->where('offer_key','age')
+			->where('offer_min_number','<=',$age)
+			->where('offer_max_number','>=',$age)			
+			->get();		
+
+	
+		foreach($offerName2 as $v3)
+		{
+			$new_arr_3[] = $v3->offer_name;
+		}	
+	
+		$offerName3 =DB::table('formula_builder_engine')
+			->select('offer_name','lender_name')
+			->whereIn('offer_name',$new_arr_3)
+			->where(['offer_key'=>'employeement_type','offer_number'=>$employeementStatus,'status'=>'1'])			
+			->get();
 		
 		$lendersMainArray = array();
-		foreach($offerName as $value)
+		foreach($offerName3 as $value)
 		{
 			$new_arr[] = $value->offer_name;
 			$lender_name[] = $value->lender_name;
@@ -223,6 +243,22 @@ class FormulaBuilderEngineController extends Controller
 						$getData[$key]['offers'][0]['total_ranking_offer'];
 						unset($getData[$key]['offers'][1]);
 						unset($getData[$key]['offers'][2]);
+						unset($getData[$key]['offer_id']);	
+						unset($getData[$key]['offer_month_1']);
+						unset($getData[$key]['offer_month_2']);	
+						unset($getData[$key]['offer_month_3']);	
+						unset($getData[$key]['offer_grant_amount_1']);
+						unset($getData[$key]['offer_grant_amount_2']);
+						unset($getData[$key]['offer_grant_amount_3']);
+						unset($getData[$key]['offer_tenure_1']);
+						unset($getData[$key]['offer_tenure_2']);
+						unset($getData[$key]['offer_tenure_3']);
+						unset($getData[$key]['offer_roi_1']);
+						unset($getData[$key]['offer_roi_2']);
+						unset($getData[$key]['offer_roi_3']);
+						unset($getData[$key]['offer_pf_1']);
+						unset($getData[$key]['offer_pf_2']);
+						unset($getData[$key]['offer_pf_3']);
 						
 					}					
 					else if ($b <= $a && $b <= $c)
@@ -230,6 +266,22 @@ class FormulaBuilderEngineController extends Controller
 						$getData[$key]['offers'][1]['total_ranking_offer'];
 						unset($getData[$key]['offers'][0]);
 						unset($getData[$key]['offers'][2]);
+						unset($getData[$key]['offer_id']);	
+						unset($getData[$key]['offer_month_1']);
+						unset($getData[$key]['offer_month_2']);	
+						unset($getData[$key]['offer_month_3']);	
+						unset($getData[$key]['offer_grant_amount_1']);
+						unset($getData[$key]['offer_grant_amount_2']);
+						unset($getData[$key]['offer_grant_amount_3']);
+						unset($getData[$key]['offer_tenure_1']);
+						unset($getData[$key]['offer_tenure_2']);
+						unset($getData[$key]['offer_tenure_3']);
+						unset($getData[$key]['offer_roi_1']);
+						unset($getData[$key]['offer_roi_2']);
+						unset($getData[$key]['offer_roi_3']);
+						unset($getData[$key]['offer_pf_1']);
+						unset($getData[$key]['offer_pf_2']);
+						unset($getData[$key]['offer_pf_3']);
 						
 					}
 					else
