@@ -16,6 +16,8 @@ class CasheAppModel extends Model
     public function cacheOffers($request){
         $creditAppData = CreditApp::where('creditapp_uuid',$request->creditapp_uid)->first();
         $this->checkDuplicateOfferLead($creditAppData['mobile_phone_number'],$creditAppData['birthdate']);
+
+        
         
     }
 

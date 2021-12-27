@@ -15,6 +15,7 @@ class UpwardsAppModel extends Model
     public $timestamps = true;
 
     public function saveUpwardsDetails($request,$app_id){
+        $upwardIframeUrl = '';
         $creditAppIdCount = CreditApp::where('creditapp_uuid',$app_id)->count();
         if($creditAppIdCount != 1){
             return Response([
@@ -37,7 +38,6 @@ class UpwardsAppModel extends Model
         $this->ifsc = $request['ifsc'];
         $this->loan_purpose = $request['loan_purpose'];
        
-        $this->Iframe_url = $request['Iframe_url'];
         $this->amount = $request['amount'];
         $this->emi = $request['emi'];
         $this->annual_interest_rate = $request['annual_interest_rate'];
@@ -46,18 +46,26 @@ class UpwardsAppModel extends Model
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->lender_created = $request['lender_created'];
         $this->processing_fees = $request['processing_fees'];
-
-        $result = $this->getandStoreUpwardsInfo($this);
-        $lenderCustomerId = $result["data"]["loan_data"]["customer_id"];
-        $lenderSystemId = $result["data"]["loan_data"]["loan_id"];
-        
-        $this->lender_customer_id = $lenderCustomerId;
-        $this->lender_system_id = $lenderSystemId;
+        $statusOnOff = ExternalConnectorsModel::externalConnects("CHECKUPWARDS");
+       
+        if($statusOnOff == 1){
+            $result = $this->getandStoreUpwardsInfo($this);
+            $lenderCustomerId = $result["data"]["loan_data"]["customer_id"];
+            $lenderSystemId = $result["data"]["loan_data"]["loan_id"];
+            $upwardIframeUrl = $this->registerUpwardsUrl($lenderCustomerId);
+            $this->lender_customer_id = $lenderCustomerId;
+            $this->lender_system_id = $lenderSystemId; 
+            $this->Iframe_url = $upwardIframeUrl;
+        }else{
+            $this->lender_customer_id = $request['lender_customer_id'];
+            $this->lender_system_id = $request['lender_system_id'];
+            $this->Iframe_url = $request['Iframe_url'];
+        }   
         if($this->save()){
             return Response([
                 'status' => 'true',
                 'message' => 'saved data successfully!',
-                'upwardapp_uid' => $this->upwardapp_uid
+                'upwardapp_uid' => $upwardIframeUrl
             ],200);
         }else{
             return Response([
@@ -196,4 +204,64 @@ class UpwardsAppModel extends Model
           return $response;  
     }
     
+    public function registerUpwardsUrl($lenderCustomerId){
+        $upwardIframeBaseUrl = config('constants.upwardIframeBaseUrl');
+        $upwardAffiliatedUserId = config('constants.upwardAffiliatedUserId');
+        $upwardTokenData = $this->getUpwardAccessToken();
+        $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
+        $nowTime = date("Y-m-d H:i:s");
+        $strUrl = $upwardIframeBaseUrl."customer_id=".$lenderCustomerId."&affiliate_user_id=".$upwardAffiliatedUserId."&hash_generation_datetime=".$nowTime."&affiliate_hash=".$accessToken;
+        return $strUrl;
+    }
+
+    public function getUpwardStatus($request){
+        $lenderSystemId = $request['lender_system_id'];
+        $lenderCustomerId = $request["lender_customer_id"];
+        $updwardStatusArray = array( 
+            "data_submit" => "Initiated",
+            "document_submit" => "In progress",
+            "initial_application_complete" => "Processing",
+            "initial_sanctioned",
+            "initial_pre_approved", 
+            "initial_sanctioned_data_complete" => "Approved",
+            "initial_disbursed" => "Disbursed",
+            "inactive" => "Expired",
+            "initial_post_sanction_dropout" => "Turned Down",
+            "initial_pre_rejected" => "Declined"
+        );
+
+        $this->GetLoanApplicationStageAsync($lenderSystemId,$lenderCustomerId);
+
+    }
+
+    public function GetLoanApplicationStageAsync($lenderSystemId, $lenderCustomerId){
+ 
+        $params = array(
+            "loan_id" => $lenderSystemId,
+            "customer_id" => $lenderCustomerId
+        );
+        $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
+        $appendTo = "v1/customer/loan/stage/data/";
+        $url = $upwardApiBaseUrl.$appendTo;
+        $curl = curl_init();
+       //$string = json_encode($params);
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_HTTPHEADER => array(
+                "Content-Type: application/json"
+              ),
+          ));
+          $json_response = curl_exec($curl);
+          $response = json_decode($json_response, true);
+          curl_close($curl);
+          dd($response);
+          return $response;  
+    }
 }
