@@ -47,6 +47,8 @@ class UpwardsAppModel extends Model
         $this->merchant_tracking_id = $request['merchant_tracking_id'];
         $this->leder_created = $request['leder_created'];
         $this->processing_fees = $request['processing_fees'];
+
+        $this->getandStoreUpwardsInfo($this);
         if($this->save()){
             return Response([
                 'status' => 'true',
@@ -123,6 +125,71 @@ class UpwardsAppModel extends Model
         $response = json_decode($json_response, true);
        
         return $response;
+    }
+
+    public function getandStoreUpwardsInfo($data){
+        $creditAppData = CreditApp::where("creditapp_uuid",$data['creditapp_uid'])->first();
+       // print_r($data);
+       
+        $params = array(
+            "first_name" => $creditAppData["first_name"],
+            "last_name" => $creditAppData["last_name"],
+            "is_partial_data" => false,
+            "pan" => $creditAppData["tin"],
+            "gender" => $creditAppData["gender"],
+            "dob" => $creditAppData["birth_date"],
+            "social_email_id" => $creditAppData["last_name"],
+            "work_email_id" => $creditAppData["last_name"],
+            "mobile_number1" => $creditAppData["last_name"],
+            "company" => $creditAppData["last_name"],
+            "employment_status_id" => $creditAppData["last_name"],
+            "salary_payment_mode_id" => $creditAppData["last_name"],
+            "profession_type_id" => $creditAppData["last_name"],
+            "total_work_experience_category_id" => $creditAppData["last_name"],
+            "salary" => $creditAppData["last_name"],
+            "bank_account_number" => $creditAppData["last_name"],
+            "bank_account_holder_full_name" => $creditAppData["last_name"],
+            "ifsc" => $creditAppData["last_name"],
+            "current_residence_type_id" => $creditAppData["last_name"],
+            "current_address_line1" => $creditAppData["last_name"],
+            "current_address_line2" => $creditAppData["last_name"],
+            "current_pincode" => $creditAppData["last_name"],
+            "current_city" => $creditAppData["last_name"],
+            "current_state" => $creditAppData["last_name"],
+            "current_residence_stay_category_id" => $creditAppData["last_name"],
+            "loan_purpose_id" => $creditAppData["last_name"],
+            "current_employment_tenure_category_id" => $creditAppData["last_name"]
+        );
+
+        $upwardTokenData = $this->getUpwardAccessToken();
+        $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
+        $affiliated_user_id = $upwardTokenData['data']['affiliated_user_id'];
+                
+        $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
+        $appendTo = "v1/customer/loan/data/";
+        $url = $upwardApiBaseUrl.$appendTo;
+        $curl = curl_init();
+        $string = json_encode($params);
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $string,
+            CURLOPT_HTTPHEADER => array(
+              "Affiliated-User-Id: $affiliated_user_id",
+              "Affiliated-User-Session-Token: $accessToken",
+              "Content-Type: application/json"
+            ),
+          ));
+          $json_response = curl_exec($curl);
+          $response = json_decode($json_response, true);
+          curl_close($curl);
+          return $response;  
     }
     
 }
