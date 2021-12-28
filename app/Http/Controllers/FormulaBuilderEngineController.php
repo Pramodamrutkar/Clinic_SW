@@ -45,17 +45,16 @@ class FormulaBuilderEngineController extends Controller
 		
 		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` 
 		where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');		
-
-	
+		
 		foreach($offerName as $v1)
 		{
 			$new_arr_1[] = $v1->offer_name;
 		}
 
-		$offerName1 =DB::table('formula_builder_engine')
+		$offerName1 = DB::table('formula_builder_engine')
 					->select('offer_name','lender_name')
 					->whereIn('offer_name',$new_arr_1)
-					->where(['offer_key'=>'City_Tier','offer_number'=>$locationData->city_tier,'status'=>'1'])					
+					->where(['offer_key'=>'City_Tier','offer_number'=> $locationData->city_tier, 'status'=>'1'])					
 					->get();
 			
 		foreach($offerName1 as $v2)
@@ -96,7 +95,7 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}
 		}		
-	
+		
 		if(empty($new_arr))
 		{
 			return [];
@@ -109,12 +108,13 @@ class FormulaBuilderEngineController extends Controller
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
 				if($upwardData["data"]["is_eligible"] != true){
 					for($i=0;$i < count($new_arr); $i++){
-						if(stripos($new_arr[$i],"upward") == 0){
+						if(stripos($new_arr[$i],"upward") === 0){
 							unset($new_arr[$i]);
 						}
 					}	
 				}
 			}			
+		
 			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
 		}
 		//DB::connection()->enableQueryLog();
@@ -128,7 +128,8 @@ class FormulaBuilderEngineController extends Controller
 		$data = array();
 		$array1 = json_decode(json_encode($offersData),True);
 		
-
+	
+	
 		foreach($array1 as $key => $val)
 		{ 
 			$weightageData = OfferWeightage::where('lender_name', $val['lender_name'])->first();
@@ -138,19 +139,19 @@ class FormulaBuilderEngineController extends Controller
 			$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome;
 									
 			
-			$data[] = array('offer_amount_1' =>$grantAmount_1);
-			$data[] = array('offer_amount_2' =>$grantAmount_2);
-			$data[] = array('offer_amount_3' =>$grantAmount_3);
+			$data[] = array('offer_amount_1' => $grantAmount_1);
+			$data[] = array('offer_amount_2' => $grantAmount_2);
+			$data[] = array('offer_amount_3' => $grantAmount_3);
 			
 			
 			
 			//offer 1
 			
-			$data[]['offer_amount_1'] = $data[0]['offer_amount_1']*$weightageData->amount_weight/100;
-			$data[]['offer_amount_1'] = $val['offer_grant_amount_1'] *$weightageData->roi_weight/100;
-			$data[]['offer_amount_1'] = $val['offer_tenure_1'] *$weightageData->tenure_weight/100;
+			$data[]['offer_amount_1'] = $data[0]['offer_amount_1'] * $weightageData->amount_weight/100;
+			$data[]['offer_amount_1'] = $val['offer_grant_amount_1'] * $weightageData->roi_weight/100;
+			$data[]['offer_amount_1'] = $val['offer_tenure_1'] * $weightageData->tenure_weight/100;
 									
-									
+			dd($data);			
 			//offer2
 			$data[]['offer_amount_2'] = $data[1]['offer_amount_2']*$weightageData->amount_weight/100;
 			$data[]['offer_amount_2'] = $val['offer_grant_amount_2'] *$weightageData->roi_weight/100;
@@ -183,7 +184,7 @@ class FormulaBuilderEngineController extends Controller
 			$data[]['offer_amount_3'] = $val['offer_pf_3'];
 			
 		}
-	
+		
 			$newarray = array_chunk($data,27);
 		
 			$offer =[];

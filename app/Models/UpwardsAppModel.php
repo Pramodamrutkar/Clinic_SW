@@ -282,7 +282,7 @@ class UpwardsAppModel extends Model
                 'message' => 'Invalid AppID'
             ],400);
         }
-        if($request['lender_name'] = "Upward"){
+        if($request['lender_name'] == "Upward"){
             $this->creditapp_uid = trim($app_id); 
             $this->upwardapp_uid = (string) Str::uuid(); 
             $this->residency_type = $request['residency_type'] ?? "";
@@ -316,9 +316,23 @@ class UpwardsAppModel extends Model
                 ],400);
             }
         }else if($request['lender_name'] == "MoneyView"){
+
+            
+
             $moneyViewObj = new MoneyViewAppModel();
             $moneyViewObj->creditapp_uid = trim($app_id); 
             $moneyViewObj->moneyview_uid = (string) Str::uuid(); 
+            
+            $moneyViewObj->residency_type = $request['residency_type'] ?? "";
+            $moneyViewObj->gender = $request['gender'] ?? "";
+            $moneyViewObj->educational_level = $request['educational_level'] ?? "";
+            $moneyViewObj->salary_payment_mode = $request['salary_payment_mode'] ?? "";
+            $moneyViewObj->prefer_net_banking = $request['prefer_net_banking'] ?? 0;
+            $moneyViewObj->term_of_use = $request['term_of_use'] ?? 0;
+            $moneyViewObj->lender_system_id = $request['lender_system_id'] ?? "";
+            $moneyViewObj->journey_url = $request['journey_url'] ?? "";
+            $moneyViewObj->emi = $request['emi'] ?? 0;
+
             $moneyViewObj->amount = $request['amount'];
             $moneyViewObj->annual_interest_rate = $request['annual_interest_rate'];
             $moneyViewObj->term_months = $request['term_months'];
