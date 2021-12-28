@@ -31,4 +31,11 @@ class UpwardsApp extends Controller
         $response = $upwardsAppModel->getUpwardAccessToken();
         return $response;
      }
+
+     public function initiateLoan(Request $request){
+        $upwardsApp = new UpwardsAppModel();
+        $response = $upwardsApp->initiateLoanApplication($request);
+        return $response; 
+     }
+
 }

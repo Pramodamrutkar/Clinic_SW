@@ -255,7 +255,7 @@ class OtpController extends Controller
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
             ->where('merchant.url_segment', trim($request->url_segment))
             ->first();
-
+            
         if (!empty($creditProspectUpdate)) {
             $creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
             $creditProspectUpdate->email = $request['email'];
@@ -281,7 +281,7 @@ class OtpController extends Controller
         } else {
             $obj  = new CreditProspect();
             $obj->credituid = (string) Str::uuid();
-            $obj->channel_id = $merchantData->channel;
+            $obj->channel_id = $merchantData->channel ?? "";
             $obj->email = $request['email'];
             $obj->mobile_phone_code = $request['mobile_phone_code'];
             $obj->mobile_phone_number = $request['mobile_phone_number'];
