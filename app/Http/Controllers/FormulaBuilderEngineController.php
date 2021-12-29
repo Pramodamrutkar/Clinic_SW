@@ -50,7 +50,12 @@ class FormulaBuilderEngineController extends Controller
 		{
 			$new_arr_1[] = $v1->offer_name;
 		}
-	
+
+		if(empty($new_arr_1))
+		{
+			return [];
+		}
+
 		$offerName1 = DB::table('formula_builder_engine')
 					->select('offer_name','lender_name')
 					->whereIn('offer_name',$new_arr_1)
@@ -95,7 +100,7 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}
 		}		
-		
+
 		if(empty($new_arr))
 		{
 			return [];
@@ -105,18 +110,18 @@ class FormulaBuilderEngineController extends Controller
 			$statusOnOff = ExternalConnectorsModel::externalConnects('CALLTOUPWARDS');
 			
 			if($statusOnOff == 1){
-				
+					
 				$upwardModel = new UpwardsAppModel();
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
+				
 				if($upwardData["data"]["is_eligible"] != true){
 					for($i=0;$i < count($new_arr); $i++){
-						if(stripos($new_arr[$i],"upward") == 0){
+						if(stripos($new_arr[$i],"upward") === 0){
 							unset($new_arr[$i]);
 						}
 					}	
 				}
 			}		
-				
 		
 			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
 			
@@ -133,9 +138,9 @@ class FormulaBuilderEngineController extends Controller
 		$data = array();
 		$array1 = json_decode(json_encode($offersData),True);
 	
+	
 		foreach($array1 as $key => $val)
 		{ 
-			
 			$weightageData = OfferWeightage::where('lender_name', $val['lender_name'])->first();
 			$grantAmount_1 = 0;
 			$grantAmount_2 = 0;
@@ -148,13 +153,22 @@ class FormulaBuilderEngineController extends Controller
 				$grantAmount_1 = $val['offer_grant_amount_1'] * $monthlyIncome / 100;
 				$grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome / 100;
 				$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome / 100;
+			}else{
+				$grantAmount_1 = $val['offer_grant_amount_1'] * $monthlyIncome;
+				$grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome;
+				$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome;
 			}
+			
+									
 			
 			$data[] = array('offer_amount_1' => $grantAmount_1);
 			$data[] = array('offer_amount_2' => $grantAmount_2);
 			$data[] = array('offer_amount_3' => $grantAmount_3);
 			
+			
+			
 			//offer 1
+			
 			$data[]['offer_amount_1'] = $data[0]['offer_amount_1'] * $weightageData->amount_weight/100;
 			$data[]['offer_amount_1'] = $val['offer_grant_amount_1'] * $weightageData->roi_weight/100;
 			$data[]['offer_amount_1'] = $val['offer_tenure_1'] * $weightageData->tenure_weight/100;
@@ -213,7 +227,8 @@ class FormulaBuilderEngineController extends Controller
 			{
 			
 				foreach($val as $key2 => $data_test)
-				{									
+				{							
+					
 					$push_data = array('offer_amount' => round($data_test[0]));
 					$push_data += array('calculated_amount_offer' => $data_test[1]);
 					$push_data += array('roi_offer' => $data_test[2]);
@@ -226,76 +241,26 @@ class FormulaBuilderEngineController extends Controller
 					
 					array_push($main_array,$push_data);
 					
-				}				
+				}	
 			}
 			
 	
 				$Final_array = array_chunk($main_array,3);							
-				$getData = $this->my_array_merge($array1, $Final_array);
-			
-		//Read code from here and sort array whose total ranking is less 
-				foreach($getData as $key => $v)
-				{						
+				
 					
+				$getData = $this->my_array_merge($array1, $Final_array);
+		//Read code from here and sort array whose total ranking is less
+				foreach($getData as $key => $v)
+				{	
 					$a = $getData[$key]['offers'][0]['total_ranking_offer'];
 					$b = $getData[$key]['offers'][1]['total_ranking_offer'];
 					$c = $getData[$key]['offers'][2]['total_ranking_offer'];
-					// $arr1 = array_column($v['offers'],'total_ranking_offer');
-					// $rankingArray = max(array_column($v['offers'],'total_ranking_offer'));
-					// $offerskey = array_search($rankingArray, $arr1);
-					// $finalarray = $v['offers'][$offerskey];
-					if ($a >= $b && $a >= $c)
+					
+					if($v['lender_name'] == 'MoneyView')
 					{
-						$getData[$key]['offers'][0]['total_ranking_offer'];
-						unset($getData[$key]['offers'][1]);
-						unset($getData[$key]['offers'][2]);
-						unset($getData[$key]['offer_id']);	
-						unset($getData[$key]['offer_month_1']);
-						unset($getData[$key]['offer_month_2']);	
-						unset($getData[$key]['offer_month_3']);	
-						unset($getData[$key]['offer_grant_amount_1']);
-						unset($getData[$key]['offer_grant_amount_2']);
-						unset($getData[$key]['offer_grant_amount_3']);
-						unset($getData[$key]['offer_tenure_1']);
-						unset($getData[$key]['offer_tenure_2']);
-						unset($getData[$key]['offer_tenure_3']);
-						unset($getData[$key]['offer_roi_1']);
-						unset($getData[$key]['offer_roi_2']);
-						unset($getData[$key]['offer_roi_3']);
-						unset($getData[$key]['offer_pf_1']);
-						unset($getData[$key]['offer_pf_2']);
-						unset($getData[$key]['offer_pf_3']);
-						
-					}					
-					else if ($b >= $c && $b >= $a)
-					{
-						$getData[$key]['offers'][1]['total_ranking_offer'];
-						unset($getData[$key]['offers'][0]);
-						unset($getData[$key]['offers'][2]);
-						unset($getData[$key]['offer_id']);	
-						unset($getData[$key]['offer_month_1']);
-						unset($getData[$key]['offer_month_2']);	
-						unset($getData[$key]['offer_month_3']);	
-						unset($getData[$key]['offer_grant_amount_1']);
-						unset($getData[$key]['offer_grant_amount_2']);
-						unset($getData[$key]['offer_grant_amount_3']);
-						unset($getData[$key]['offer_tenure_1']);
-						unset($getData[$key]['offer_tenure_2']);
-						unset($getData[$key]['offer_tenure_3']);
-						unset($getData[$key]['offer_roi_1']);
-						unset($getData[$key]['offer_roi_2']);
-						unset($getData[$key]['offer_roi_3']);
-						unset($getData[$key]['offer_pf_1']);
-						unset($getData[$key]['offer_pf_2']);
-						unset($getData[$key]['offer_pf_3']);
-						
-					}
-					else
-					{						
-						$getData[$key]['offers'][2]['total_ranking_offer'];
 
-						unset($getData[$key]['offers'][0]);
 						unset($getData[$key]['offers'][1]);
+						unset($getData[$key]['offers'][2]);
 						unset($getData[$key]['offer_id']);	
 						unset($getData[$key]['offer_month_1']);
 						unset($getData[$key]['offer_month_2']);	
@@ -312,11 +277,81 @@ class FormulaBuilderEngineController extends Controller
 						unset($getData[$key]['offer_pf_1']);
 						unset($getData[$key]['offer_pf_2']);
 						unset($getData[$key]['offer_pf_3']);
+							
+					}else{
+						if ($a <= $b && $a <= $c)
+						{
+							$getData[$key]['offers'][0]['total_ranking_offer'];
+							unset($getData[$key]['offers'][1]);
+							unset($getData[$key]['offers'][2]);
+							unset($getData[$key]['offer_id']);	
+							unset($getData[$key]['offer_month_1']);
+							unset($getData[$key]['offer_month_2']);	
+							unset($getData[$key]['offer_month_3']);	
+							unset($getData[$key]['offer_grant_amount_1']);
+							unset($getData[$key]['offer_grant_amount_2']);
+							unset($getData[$key]['offer_grant_amount_3']);
+							unset($getData[$key]['offer_tenure_1']);
+							unset($getData[$key]['offer_tenure_2']);
+							unset($getData[$key]['offer_tenure_3']);
+							unset($getData[$key]['offer_roi_1']);
+							unset($getData[$key]['offer_roi_2']);
+							unset($getData[$key]['offer_roi_3']);
+							unset($getData[$key]['offer_pf_1']);
+							unset($getData[$key]['offer_pf_2']);
+							unset($getData[$key]['offer_pf_3']);
+							
+						}
+						else if ($b <= $a && $b <= $c)
+						{
+							$getData[$key]['offers'][1]['total_ranking_offer'];
+							unset($getData[$key]['offers'][0]);
+							unset($getData[$key]['offers'][2]);
+							unset($getData[$key]['offer_id']);	
+							unset($getData[$key]['offer_month_1']);
+							unset($getData[$key]['offer_month_2']);	
+							unset($getData[$key]['offer_month_3']);	
+							unset($getData[$key]['offer_grant_amount_1']);
+							unset($getData[$key]['offer_grant_amount_2']);
+							unset($getData[$key]['offer_grant_amount_3']);
+							unset($getData[$key]['offer_tenure_1']);
+							unset($getData[$key]['offer_tenure_2']);
+							unset($getData[$key]['offer_tenure_3']);
+							unset($getData[$key]['offer_roi_1']);
+							unset($getData[$key]['offer_roi_2']);
+							unset($getData[$key]['offer_roi_3']);
+							unset($getData[$key]['offer_pf_1']);
+							unset($getData[$key]['offer_pf_2']);
+							unset($getData[$key]['offer_pf_3']);
+							
+						}
+						else
+						{						
+							$getData[$key]['offers'][2]['total_ranking_offer'];
+							unset($getData[$key]['offers'][0]);
+							unset($getData[$key]['offers'][1]);
+							unset($getData[$key]['offer_id']);	
+							unset($getData[$key]['offer_month_1']);
+							unset($getData[$key]['offer_month_2']);	
+							unset($getData[$key]['offer_month_3']);	
+							unset($getData[$key]['offer_grant_amount_1']);
+							unset($getData[$key]['offer_grant_amount_2']);
+							unset($getData[$key]['offer_grant_amount_3']);
+							unset($getData[$key]['offer_tenure_1']);
+							unset($getData[$key]['offer_tenure_2']);
+							unset($getData[$key]['offer_tenure_3']);
+							unset($getData[$key]['offer_roi_1']);
+							unset($getData[$key]['offer_roi_2']);
+							unset($getData[$key]['offer_roi_3']);
+							unset($getData[$key]['offer_pf_1']);
+							unset($getData[$key]['offer_pf_2']);
+							unset($getData[$key]['offer_pf_3']);
+						}	
 					}
+					
 				}
 				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
-			
-        return $getData;
+		return $getData;
     }
 	
 	function my_array_merge(&$array1, &$newarray) 

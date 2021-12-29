@@ -28,9 +28,9 @@ Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
-//Route::post('/upward-eligibility', [UpwardsApp::class,'checkUpwardEligible']);
+Route::post('/upward-status', [UpwardsApp::class,'checkUpwardStatus']);
 //Route::post('/upward-token', [UpwardsApp::class,'upwardAccessToken']);
-Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
+//Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);

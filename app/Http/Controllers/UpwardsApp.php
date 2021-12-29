@@ -20,7 +20,7 @@ class UpwardsApp extends Controller
     }
 
        //upward testing 
-    public function checkUpwardEligible(Request $request){
+    public function checkUpwardStatus(Request $request){
         $upwardsAppModel = new UpwardsAppModel();
         $response = $upwardsAppModel->getUpwardStatus($request);
         return $response;

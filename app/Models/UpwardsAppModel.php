@@ -26,6 +26,12 @@ class UpwardsAppModel extends Model
             ],400);
         }
         $upwardUpdatedata = UpwardsAppModel::where('creditapp_uid',$app_id)->first();
+        if(empty($upwardUpdatedata)){
+            return Response([
+                'status' => 'fail',
+                'message' => 'No Applied loan exist'
+            ],400);
+        }
         $upwardUpdatedata->creditapp_uid = trim($app_id); 
         $upwardUpdatedata->residency_type = $request['residency_type'];
         $upwardUpdatedata->gender = $request['gender'];
@@ -161,7 +167,7 @@ class UpwardsAppModel extends Model
             "work_email_id" => $creditAppData["email"],
             "mobile_number1" => $creditAppData["mobile_phone_number"],
             "company" => $data["company"],
-            "employment_status_id" =>  SmartList::getFieldDescription($creditAppData["employment_status_code"]),
+            "employment_status_id" =>  SmartList::getFieldDescription($creditAppData["employment_status_code"]) == "Wrkr" ? 3 : 2,
             "salary_payment_mode_id" =>  SmartList::getFieldDescription($data["salary_payment_mode"]),
             "profession_type_id" => SmartList::getFieldDescription($data["profession_type"]),
             "total_work_experience_category_id" => SmartList::getFieldDescription($data["total_work_experience"]),
@@ -221,6 +227,7 @@ class UpwardsAppModel extends Model
     }
 
     public function getUpwardStatus($request){
+        
         $lenderSystemId = $request['lender_system_id'];
         $lenderCustomerId = $request["lender_customer_id"];
         $updwardStatusArray = array( 
@@ -244,29 +251,23 @@ class UpwardsAppModel extends Model
  
         $params = array(
             "loan_id" => $lenderSystemId,
-            "customer_id" => $lenderCustomerId
+            "customer_id" => $lenderCustomerId,
+            "level_id" => 1
         );
         $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
         $appendTo = "v1/customer/loan/stage/data/";
         $url = $upwardApiBaseUrl.$appendTo;
-        $curl = curl_init();
-       //$string = json_encode($params);
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
-              ),
-          ));
-          $json_response = curl_exec($curl);
-          $response = json_decode($json_response, true);
-          curl_close($curl);
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+        $json_response = curl_exec($curl);
+        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if ($status != 200) {
+            die("Error: call to token URL $url failed with status $status, response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
+        }
+        curl_close($curl);
+        $response = json_decode($json_response, true);
           dd($response);
           return $response;  
     }
@@ -282,7 +283,7 @@ class UpwardsAppModel extends Model
                 'message' => 'Invalid AppID'
             ],400);
         }
-        if($request['lender_name'] == "Upward"){
+        if($request['lender_name'] == "Upwards"){
             $this->creditapp_uid = trim($app_id); 
             $this->upwardapp_uid = (string) Str::uuid(); 
             $this->residency_type = $request['residency_type'] ?? "";
@@ -303,6 +304,7 @@ class UpwardsAppModel extends Model
             $this->term_months = $request['term_months'];
             $this->processing_fees = $request['processing_fees'];
             $this->mis_status = "Initiated";
+            
             if($this->save()){
                 return Response([
                     'status' => 'true',
@@ -316,9 +318,6 @@ class UpwardsAppModel extends Model
                 ],400);
             }
         }else if($request['lender_name'] == "MoneyView"){
-
-            
-
             $moneyViewObj = new MoneyViewAppModel();
             $moneyViewObj->creditapp_uid = trim($app_id); 
             $moneyViewObj->moneyview_uid = (string) Str::uuid(); 
@@ -371,6 +370,12 @@ class UpwardsAppModel extends Model
                     'message' => 'Something went wrong'
                 ],400);
             }
+        }else{
+            return Response([
+                'status' => 'false',
+                'message' => 'Invalid Lender Name'
+            ],400);
+        
         }
         
     }
