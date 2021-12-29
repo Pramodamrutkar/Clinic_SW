@@ -49,7 +49,12 @@ class SmartListController extends Controller
     {
         $lcode = trim($request->lang);
         $langData = Languages::where('langsdesc', $lcode )->first();
-
+        if(empty($langData)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid language code',
+            ], 400);
+        }
      
         $smartlistData = DB::select('SELECT b.data_code as id,b.data_ldesc as value, b.order,c.dg_desc FROM smart_lists as a 
         INNER JOIN smart_list_data as b 
