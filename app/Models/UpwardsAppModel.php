@@ -380,4 +380,20 @@ class UpwardsAppModel extends Model
         
     }
 
+    public function getUpwardsOthersOffer($id){
+        $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as Lender', 'upwards_app.lender_system_id as LenderId', 'upwards_app.processing_fees as FeesInfo','upwards_app.annual_interest_rate as RateInfo','upwards_app.emi as Emi','upwards_app.amount as MaxAmount','upwards_app.term_months as TermMonths','upwards_app.loan_purpose as LoanType')->where('creditapp_uid',$id)->first();
+        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as Lender', 'moneyview_app.lender_system_id as LenderId', 'moneyview_app.processing_fees as FeesInfo','moneyview_app.annual_interest_rate as RateInfo','moneyview_app.emi as Emi','moneyview_app.amount as MaxAmount','moneyview_app.term_months as TermMonths')->where('creditapp_uid',$id)->first();
+        $casheApp = CasheAppModel::select('cashe_app.lender_name as Lender', 'cashe_app.lender_system_id as LenderId', 'cashe_app.processing_fees as FeesInfo','cashe_app.annual_interest_rate as RateInfo','cashe_app.emi as Emi','cashe_app.amount as MaxAmount','cashe_app.term_months as TermMonths')->where('creditapp_uid',$id)->first(); 
+        $offerData = array();
+        if(!empty($upwardsApp)){
+            $offerData[] = $upwardsApp;
+        }
+        if(!empty($moneyView)){
+            $offerData[] = $moneyView;
+        }
+        if(!empty($casheApp)){
+            $offerData[] = $casheApp;
+        }
+        return $offerData;
+    }
 }

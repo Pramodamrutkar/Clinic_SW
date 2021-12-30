@@ -7,6 +7,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\SmartListController;
 use App\Http\Controllers\UpwardsApp;
 use App\Http\Controllers\FormulaBuilderEngineController;
+use App\Http\Controllers\PersonalAccessTokenController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,9 @@ Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
+Route::post('/lap/authenticate',[PersonalAccessTokenController::class,'lapAuthenticate']);
+Route::put('/process/form/{id}',[CreditProspectController::class,'patchSftoLap']);
+Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
 Route::post('/upward-status', [UpwardsApp::class,'checkUpwardStatus']);
@@ -46,4 +50,5 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
     Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);    
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
+    
 });

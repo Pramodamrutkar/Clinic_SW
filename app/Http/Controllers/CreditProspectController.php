@@ -65,4 +65,11 @@ class CreditProspectController extends Controller
       $userResponse = $creditAppUser->profileUser($app_id);
       return $userResponse;
     }
+
+    public function patchSftoLap(Request $request,$id){
+      $creditobj = new CreditApp();
+      $response = $creditobj->patchPersonalData($request,$id);
+      return $response;
+    }
+
 }

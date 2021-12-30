@@ -15,7 +15,7 @@ class CreditApp extends Model
 
     protected $table = "credit_app";
 
-    protected $primaryKey = "app_id";
+    protected $primaryKey = "creditapp_uuid";
 
     public $timestamps = true;
 
@@ -31,7 +31,7 @@ class CreditApp extends Model
                     'message' => 'Invalid App ID'
                 ], 400);
             }
-            $creditAppData->creditapp_uuid = $request->creditapp_uid;
+           //$creditAppData->creditapp_uuid = $request->creditapp_uid;
             $creditAppData->creditprospect_uuid = $creditAppData->creditprospect_uuid;
             $creditAppData->first_name = $request['first_name'];
             $creditAppData->middle_name = $request['middle_name'];
@@ -320,5 +320,66 @@ class CreditApp extends Model
         }
     }
 
-    
+    public function patchPersonalData($request,$id){
+     
+            $firstName = trim($request->FirstName);
+            $lastName = trim($request->LastName);
+            $birthDate = trim($request->BirthDate);
+            $email = trim($request->Email);
+            $postalcode = trim($request->PostalCode);
+            $address1 =trim($request->Addr1);
+            $address2 =trim($request->Addr2);
+            $mobileNumber = trim($request->MobilePhoneNumber);
+            $monthlyIncome = trim($request->MonthlyIncome);
+            //$token = PersonalAccessToken::checkTokenExpire(trim($request->token),trim($request->tokenId));
+          
+            //if($token = 1){
+            $creditdata = CreditApp::where("creditapp_uuid",$id)->first();
+               if(empty($creditdata)){
+                    return response([
+                        'success' => 'false',
+                        'message' => 'Invalid App ID'
+                    ], 400);
+                }
+                $creditdata->first_name = $firstName;
+                $creditdata->last_name = $lastName;
+                $creditdata->birth_date = $birthDate;
+                $creditdata->postal_code = $postalcode;
+                $creditdata->address1 = $address1;
+                $creditdata->address2 = $address2;
+                $creditdata->monthly_income = $monthlyIncome;
+                $creditdata->email = $email;
+                $this->updateCreditProspectfromSF($creditdata);
+                if($creditdata->save()){
+                    return response([
+                        'success' => 'true',
+                        'message' => 'Record Has been Updated'
+                    ], 200);
+                }else{
+                    return response([
+                            'success' => 'false',
+                            'message' => 'Something went wrong'
+                        ], 400);
+                }
+            // }else{
+            //     return response([
+            //         'success' => 'false',
+            //         'message' => 'Invalid token or token_id'
+            //     ], 400);
+            // }
+    }
+
+    public function updateCreditProspectfromSF($creditData){
+        $creditProspect = CreditProspect::where('credituid',$creditData['creditprospect_uuid'])->first();
+        if(empty($creditProspect)){
+            return 0;
+        }
+        $creditProspect->first_name	= $creditData['first_name'];
+        $creditProspect->last_name	= $creditData['last_name'];
+        $creditProspect->mobile_phone_number = $creditData['mobile_phone_number'];
+        $creditProspect->email	= $creditData['email'];
+        $creditProspect->birth_date	= $creditData['birth_date'];
+        $creditProspect->save();
+    }
+
 }

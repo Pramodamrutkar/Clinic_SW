@@ -38,4 +38,9 @@ class UpwardsApp extends Controller
         return $response; 
      }
 
+     public function showOffers($id){
+         $upwardsoffers = new UpwardsAppModel();
+         $response = $upwardsoffers->getUpwardsOthersOffer($id);
+         return $response;
+     }
 }
