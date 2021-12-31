@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\UpwardsApp;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -68,7 +69,14 @@ class MoneyViewAppModel extends Model
                 'message' => 'Empty Application ID'
             ],400);
         }
-       
+        $upwardsAppModelData = UpwardsAppModel::select('upwards_app.lender_system_id','upwards_app.lender_customer_id')->where('creditapp_uid',$app_id)->first();
+        $lenderSystemId = $upwardsAppModelData['lender_system_id'];
+        $lenderCustomerId = $upwardsAppModelData['lender_customer_id'];
+        $upwardsApp = new UpwardsAppModel();
+        $upwardStatus = $upwardsApp->getUpwardStatus($lenderSystemId,$lenderCustomerId);
+        $upwardModel = UpwardsAppModel::where("creditapp_uid",$app_id)->first();
+        $upwardModel->mis_status = $upwardStatus ?? "";
+        $upwardModel->save();
         // $offerData = DB::table('moneyview_app')
         // ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
         // ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')

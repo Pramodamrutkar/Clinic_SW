@@ -67,6 +67,8 @@ class UpwardsAppModel extends Model
             $lenderCustomerId = $result["data"]["loan_data"]["customer_id"];
             $lenderSystemId = $result["data"]["loan_data"]["loan_id"];
             $upwardIframeUrl = $this->registerUpwardsUrl($lenderCustomerId);
+            $upwardStatus = $this->getUpwardStatus($lenderSystemId,$lenderCustomerId);
+            $upwardUpdatedata->mis_status = $upwardStatus;
             $upwardUpdatedata->lender_customer_id = $lenderCustomerId;
             $upwardUpdatedata->lender_system_id = $lenderSystemId; 
             $upwardUpdatedata->Iframe_url = $upwardIframeUrl;
@@ -93,7 +95,7 @@ class UpwardsAppModel extends Model
     public function checkUpwardsEligibility($email,$pan){
         //$pan = trim($request->pan);
         //$email = trim($request->social_email_id);
-        $params = array(
+        $payload = array(
             "pan" => $pan,
             "social_email_id" => $email
         );
@@ -104,28 +106,14 @@ class UpwardsAppModel extends Model
         $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
         $appendTo = "v1/customer/loan/eligibility/";
         $url = $upwardApiBaseUrl.$appendTo;
-        $curl = curl_init();
-        $string = json_encode($params);
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $string,
-            CURLOPT_HTTPHEADER => array(
-              "Affiliated-User-Id: $affiliated_user_id",
-              "Affiliated-User-Session-Token: $accessToken",
-              "Content-Type: application/json"
-            ),
-          ));
-          $json_response = curl_exec($curl);
-          $response = json_decode($json_response, true);
-          curl_close($curl);
-          return $response;  
+
+        $headersArray = array(
+            "Affiliated-User-Id: $affiliated_user_id",
+            "Affiliated-User-Session-Token: $accessToken",
+            "Content-Type: application/json"
+        );
+        $response = $this->curlCommonFunction($url,$payload,$headersArray);
+        return $response;
     } 
     
     public function getUpwardAccessToken(){
@@ -156,7 +144,7 @@ class UpwardsAppModel extends Model
     public function getandStoreUpwardsInfo($data){
         $creditAppData = CreditApp::where("creditapp_uuid",$data['creditapp_uid'])->first();
  
-        $params = array(
+        $payload = array(
             "first_name" => $creditAppData["first_name"],
             "last_name" => $creditAppData["last_name"],
             "is_partial_data" => false,
@@ -185,35 +173,24 @@ class UpwardsAppModel extends Model
             "loan_purpose_id" => SmartList::getFieldDescription($data["loan_purpose"]),
             "current_employment_tenure_category_id" => SmartList::getFieldDescription($data["current_employment_tenure"])
         );
+
         $upwardTokenData = $this->getUpwardAccessToken();
         $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
         $affiliated_user_id = $upwardTokenData['data']['affiliated_user_id'];
-                
+
         $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
+        
         $appendTo = "v1/customer/loan/data/";
+        
         $url = $upwardApiBaseUrl.$appendTo;
-        $curl = curl_init();
-        $string = json_encode($params);
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $string,
-            CURLOPT_HTTPHEADER => array(
-              "Affiliated-User-Id: $affiliated_user_id",
-              "Affiliated-User-Session-Token: $accessToken",
-              "Content-Type: application/json"
-            ),
-          ));
-          $json_response = curl_exec($curl);
-          $response = json_decode($json_response, true);
-          curl_close($curl);
-          return $response;  
+
+        $headersArray = array(
+            "Affiliated-User-Id: $affiliated_user_id",
+            "Affiliated-User-Session-Token: $accessToken",
+            "Content-Type: application/json"
+        );
+        $response = $this->curlCommonFunction($url, $payload, $headersArray);
+        return $response;
     }
     
     public function registerUpwardsUrl($lenderCustomerId){
@@ -226,30 +203,23 @@ class UpwardsAppModel extends Model
         return $strUrl;
     }
 
-    public function getUpwardStatus($request){
+    public function getUpwardStatus($lenderSystemId,$lenderCustomerId){
         
-        $lenderSystemId = $request['lender_system_id'];
-        $lenderCustomerId = $request["lender_customer_id"];
-        $updwardStatusArray = array( 
-            "data_submit" => "Initiated",
-            "document_submit" => "In progress",
-            "initial_application_complete" => "Processing",
-            "initial_sanctioned",
-            "initial_pre_approved", 
-            "initial_sanctioned_data_complete" => "Approved",
-            "initial_disbursed" => "Disbursed",
-            "inactive" => "Expired",
-            "initial_post_sanction_dropout" => "Turned Down",
-            "initial_pre_rejected" => "Declined"
-        );
-
-        $this->GetLoanApplicationStageAsync($lenderSystemId,$lenderCustomerId);
-
-    }
+        //$lenderSystemId = $request['lender_system_id'];
+        //$lenderCustomerId = $request["lender_customer_id"];
+        $upwardStatusData = $this->GetLoanApplicationStageAsync($lenderSystemId,$lenderCustomerId);
+        if(!empty($upwardStatusData['data'])){
+            $lenderStatus = $upwardStatusData['data']['loan_stage'];
+            $lapStatus = OfferStatusModel::getLapStatus("Upwards",$lenderStatus);
+            return $lapStatus;
+        }else{
+            return "";
+        }
+    }   
 
     public function GetLoanApplicationStageAsync($lenderSystemId, $lenderCustomerId){
  
-        $params = array(
+        $payload = array(
             "loan_id" => $lenderSystemId,
             "customer_id" => $lenderCustomerId,
             "level_id" => 1
@@ -257,23 +227,23 @@ class UpwardsAppModel extends Model
         $upwardApiBaseUrl = config('constants.upwardApiBaseUrl');
         $appendTo = "v1/customer/loan/stage/data/";
         $url = $upwardApiBaseUrl.$appendTo;
-        $curl = curl_init($url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
-        $json_response = curl_exec($curl);
-        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        if ($status != 200) {
-            die("Error: call to token URL $url failed with status $status, response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
-        }
-        curl_close($curl);
-        $response = json_decode($json_response, true);
-          dd($response);
-          return $response;  
+
+        $upwardTokenData = $this->getUpwardAccessToken();
+        $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
+        $affiliated_user_id = $upwardTokenData['data']['affiliated_user_id'];
+        $headersArray = array(
+            "Affiliated-User-Id: $affiliated_user_id",
+            "Affiliated-User-Session-Token: $accessToken",
+            "Content-Type: application/json"
+        );
+
+        $response = $this->curlCommonFunction($url,$payload,$headersArray);
+        return $response;
     }
+    
     /**
      * common function to initiate loan for all lenders based on lender name.
-     */
+    */
     public function initiateLoanApplication($request){
         $app_id = $request['creditapp_id']; 
         $creditAppIdCount = CreditApp::where('creditapp_uuid',$app_id)->count();
@@ -395,5 +365,29 @@ class UpwardsAppModel extends Model
             $offerData[] = $casheApp;
         }
         return $offerData;
+    }
+
+    /**
+     * common CURL function to call lenders APIs.
+     */
+    public function curlCommonFunction($url,$payload,$headersArray){
+        $curl = curl_init();
+        $string = json_encode($payload);
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $string,
+            CURLOPT_HTTPHEADER => $headersArray,
+          ));
+        $json_response = curl_exec($curl);
+        $response = json_decode($json_response, true);
+        curl_close($curl);  
+        return $response;
     }
 }

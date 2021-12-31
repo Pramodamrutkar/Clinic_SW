@@ -32,9 +32,10 @@ Route::put('/process/form/{id}',[CreditProspectController::class,'patchSftoLap']
 Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
-Route::post('/upward-status', [UpwardsApp::class,'checkUpwardStatus']);
+//Route::post('/upward-status', [UpwardsApp::class,'checkUpwardStatus']);
 //Route::post('/upward-token', [UpwardsApp::class,'upwardAccessToken']);
-//Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
+Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
+Route::post('/create-cache-user/{app_id}', [CasheApp::class,'createUserWithCache']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);

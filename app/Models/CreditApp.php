@@ -18,7 +18,7 @@ class CreditApp extends Model
     protected $primaryKey = "creditapp_uuid";
 
     public $timestamps = true;
-
+    public $incrementing = false;
 
     public function savePersonalInformationiInApp($request)
     {   
@@ -81,8 +81,9 @@ class CreditApp extends Model
                 ], 400);
             }
         }else{
+
             $this->creditapp_uuid = (string) Str::uuid();
-            $creditProspectUuid = $this->saveCreditProspectData($request,$this->creditapp_uuid);
+            $creditProspectUuid = $this->saveCreditProspectData($request, $this->creditapp_uuid);
             $this->creditprospect_uuid = $creditProspectUuid;
             $this->first_name = $request['first_name'];
             $this->middle_name = $request['middle_name'];
@@ -115,6 +116,7 @@ class CreditApp extends Model
             $this->monthly_income = empty($request['monthly_income']) ? round($request['annual_income'] / 12) : $request['monthly_income'];
             $this->knockout_lenders = $request['knockout_lenders'];
             $this->submission = $request['submission'];
+           
             if ($this->save()) {
                 $statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
                 if($statusOnOff == 1){
@@ -136,6 +138,7 @@ class CreditApp extends Model
 
     public function saveCreditProspectData($request, $creditInflightAppId)
     {
+        
         $creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
         if (empty($creditProspectData)) {
             return response([
@@ -278,6 +281,7 @@ class CreditApp extends Model
          ->where('credit_app.tin', $tin)
          ->where('credit_app.creditprospect_uuid', $creditProspectId)
          ->first();
+         dd($creditProspectData);
         if(empty($creditProspectData)){
                 return response([
                     'success' => 'false',

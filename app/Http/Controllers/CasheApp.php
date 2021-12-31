@@ -16,4 +16,10 @@ class CasheApp extends Controller
         $response = $casheAppModel->cacheOffers($request);
         return $response;
     }
+
+    public function createUserWithCache($app_id){
+        $casheAppModel = new CasheAppModel();
+        $response = $casheAppModel->createUserWithCache($app_id);
+        return $response;
+    }
 }

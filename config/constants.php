@@ -23,7 +23,8 @@ return [
      
     "cacheApiBaseUrl" => "https://test-partners.cashe.co.in/partner/",
     "cacheDownloadUrl" => "https://smarturl.it/CASHe_Website",
-    "cachePartnerName" => "CreditLinks_Partner"
+    "cachePartnerName" => "CreditLinks_Partner",
+    "passphrase" => 'CreditLinks@PRdC8$He$2o!#'
     
 ];
 

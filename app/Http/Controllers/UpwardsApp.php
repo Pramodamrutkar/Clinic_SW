@@ -20,11 +20,11 @@ class UpwardsApp extends Controller
     }
 
        //upward testing 
-    public function checkUpwardStatus(Request $request){
-        $upwardsAppModel = new UpwardsAppModel();
-        $response = $upwardsAppModel->getUpwardStatus($request);
-        return $response;
-     }
+   //  public function checkUpwardStatus(Request $request){
+   //      $upwardsAppModel = new UpwardsAppModel();
+   //      $response = $upwardsAppModel->getUpwardStatus($request);
+   //      return $response;
+   //   }
 
      public function upwardAccessToken(){
         $upwardsAppModel = new UpwardsAppModel();
