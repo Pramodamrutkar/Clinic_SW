@@ -199,7 +199,8 @@ class UpwardsAppModel extends Model
         $upwardTokenData = $this->getUpwardAccessToken();
         $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
         $nowTime = date("Y-m-d\TH:i:s");
-        $affiliate_hash = md5($accessToken.$nowTime); 
+        $concatedString = $accessToken.$nowTime;
+        $affiliate_hash = md5($concatedString); 
         $strUrl = $upwardIframeBaseUrl."customer_id=".$lenderCustomerId."&affiliate_user_id=".$upwardAffiliatedUserId."&hash_generation_datetime=".$nowTime."&affiliate_hash=".$affiliate_hash;
         return $strUrl;
     }
