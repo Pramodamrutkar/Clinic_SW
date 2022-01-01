@@ -81,7 +81,7 @@ class UpwardsAppModel extends Model
             return Response([
                 'status' => 'true',
                 'message' => 'saved data successfully!',
-                'upwardapp_uid' => $upwardIframeUrl
+                'upwardIframeUrl' => $upwardIframeUrl
             ],200);
         }else{
             return Response([
@@ -198,8 +198,9 @@ class UpwardsAppModel extends Model
         $upwardAffiliatedUserId = config('constants.upwardAffiliatedUserId');
         $upwardTokenData = $this->getUpwardAccessToken();
         $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
-        $nowTime = date("Y-m-d H:i:s");
-        $strUrl = $upwardIframeBaseUrl."customer_id=".$lenderCustomerId."&affiliate_user_id=".$upwardAffiliatedUserId."&hash_generation_datetime=".$nowTime."&affiliate_hash=".$accessToken;
+        $nowTime = date("Y-m-d\TH:i:s");
+        $affiliate_hash = md5($accessToken.$nowTime); 
+        $strUrl = $upwardIframeBaseUrl."customer_id=".$lenderCustomerId."&affiliate_user_id=".$upwardAffiliatedUserId."&hash_generation_datetime=".$nowTime."&affiliate_hash=".$affiliate_hash;
         return $strUrl;
     }
 
@@ -208,10 +209,15 @@ class UpwardsAppModel extends Model
         //$lenderSystemId = $request['lender_system_id'];
         //$lenderCustomerId = $request["lender_customer_id"];
         $upwardStatusData = $this->GetLoanApplicationStageAsync($lenderSystemId,$lenderCustomerId);
+      
         if(!empty($upwardStatusData['data'])){
-            $lenderStatus = $upwardStatusData['data']['loan_stage'];
-            $lapStatus = OfferStatusModel::getLapStatus("Upwards",$lenderStatus);
-            return $lapStatus;
+            $lenderStatus = $upwardStatusData['data']['loan_stage'] ?? "";
+            if($lenderStatus != ""){
+                $lapStatus = OfferStatusModel::getLapStatus("Upwards",$lenderStatus);
+                return $lapStatus;
+            }else{
+                return "";
+            }
         }else{
             return "";
         }

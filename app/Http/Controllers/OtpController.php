@@ -70,7 +70,7 @@ class OtpController extends Controller
             $otpInsert->device_locator = $mobileNo;
         }
         $otpInsert->user_id = empty($creditProspectdata['user_id']) ? 0 : $creditProspectdata['user_id']; // primary key of credit prospect table.
-        $otpInsert->expire_otp_time = date("Y-m-d H:i:s", strtotime(date('Y-m-d H:i:s') . "$expireTime minute"));
+        $otpInsert->expire_otp_time = date("Y-m-d H:i:s", strtotime(date('Y-m-d H:i:s') . "$expireTime seconds"));
         if ($otpInsert->save()) {
             $maskId = $this->maskEmailOrPhone($otpInsert->device_locator);
             return response([

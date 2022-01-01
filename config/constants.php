@@ -6,7 +6,7 @@ return [
     
     "sender" => 'CRLINK',
 
-    'otpexpire' => "5",
+    'otpexpire' => "75",
     
     "pe_idEntityId" => "1001684972734281605",
 

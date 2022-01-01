@@ -44,7 +44,7 @@ class FormulaBuilderEngineController extends Controller
 		
 		
 		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');		
-	
+
 
 		foreach($offerName as $v1)
 		{
@@ -87,6 +87,7 @@ class FormulaBuilderEngineController extends Controller
 			->where(['offer_key'=>'employeement_type','offer_number'=>$employeementStatus,'status'=>'1'])			
 			->get();
 		
+		
 		$lendersMainArray = array();
 		foreach($offerName3 as $value)
 		{
@@ -100,7 +101,6 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}
 		}		
-
 		if(empty($new_arr))
 		{
 			return [];
@@ -114,7 +114,7 @@ class FormulaBuilderEngineController extends Controller
 				$upwardModel = new UpwardsAppModel();
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
 				
-				if($upwardData["data"]["is_eligible"] != true){
+				if($upwardData["data"]["is_eligible"] === false){
 					for($i=0;$i < count($new_arr); $i++){
 						if(stripos($new_arr[$i],"upward") === 0){
 							unset($new_arr[$i]);
@@ -137,7 +137,6 @@ class FormulaBuilderEngineController extends Controller
 					
 		$data = array();
 		$array1 = json_decode(json_encode($offersData),True);
-	
 	
 		foreach($array1 as $key => $val)
 		{ 
