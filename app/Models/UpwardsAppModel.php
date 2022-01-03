@@ -331,8 +331,8 @@ class UpwardsAppModel extends Model
             $casheLenderSystemId = 0;
             $statusOnOff = ExternalConnectorsModel::externalConnects("CREATECASHEUSER");
             if($statusOnOff == 1){
-                $upwardAppModel = new UpwardsAppModel();
-                $casheNewUserData = $upwardAppModel->createUserWithCache(trim($app_id));
+                $cacheAppModel = new CasheAppModel();
+                $casheNewUserData = $cacheAppModel->createUserWithCache(trim($app_id));
                 if(!empty($casheNewUserData)){
                     if($casheNewUserData["statusCode"] == 200){
                         $casheLenderSystemId = $casheNewUserData["payLoad"];  

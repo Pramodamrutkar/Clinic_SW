@@ -70,32 +70,37 @@ class MoneyViewAppModel extends Model
             ],400);
         }
         $upwardlenderSystemId = '';
-        $upwardsAppModelData = UpwardsAppModel::select('upwards_app.lender_system_id','upwards_app.lender_customer_id')->where('creditapp_uid',$app_id)->first();
-        if(!empty($upwardsAppModelData)){
-            $upwardlenderSystemId = $upwardsAppModelData['lender_system_id'];
-            $lenderCustomerId = $upwardsAppModelData['lender_customer_id'];
+        $UpwardsAppModel = UpwardsAppModel::select('*')->where('creditapp_uid',$app_id)->first();
+  
+        if(!empty($UpwardsAppModel)){
+            $upwardlenderSystemId = $UpwardsAppModel['lender_system_id'];
+            $lenderCustomerId = $UpwardsAppModel['lender_customer_id'];
         }
         if(!empty($upwardlenderSystemId)){
             $upwardsApp = new UpwardsAppModel();
             $upwardStatus = $upwardsApp->getUpwardStatus($upwardlenderSystemId,$lenderCustomerId);
-            $upwardModel = UpwardsAppModel::where("creditapp_uid",$app_id)->first();
-            $upwardModel->mis_status = $upwardStatus ?? "";
-            $upwardModel->save();
+            //$upwardModel = UpwardsAppModel::where("creditapp_uid",$app_id)->first();
+            $UpwardsAppModel->mis_status = $upwardStatus ?? "";
+            $UpwardsAppModel->save();
         }
+
         $statusOnOff = ExternalConnectorsModel::externalConnects("CASHESTATUS");
         if($statusOnOff == 1){
             $cashelenderSystemId = 0;
-            $casheAppModelData = CasheAppModel::select('cashe_app.lender_system_id')->where('creditapp_uid',$app_id)->first();
-            if(!empty($casheAppModelData)){
-                $cashelenderSystemId = $casheAppModelData['lender_system_id'];
+            $casheAppModel = CasheAppModel::select('*')->where('creditapp_uid',$app_id)->first();
+            
+            if(!empty($casheAppModel)){
+                $cashelenderSystemId = $casheAppModel['lender_system_id'];
                 $casheApp = new CasheAppModel();
                 $responseCasheStatus = $casheApp->getCacheStatus($cashelenderSystemId);
                 if(!empty($responseCasheStatus)){
-                    if($responseCasheStatus["status"] === "OK"){
-                        $responseCasheStatus->mis_status = $responseCasheStatus["message"] ?? "";
+                    if($responseCasheStatus["statusCode"] == 200){
+                        $casheAppModel->mis_status = $responseCasheStatus["message"];
+                    
+                        $casheAppModel->save();
                     }
                 }
-                $responseCasheStatus->save();
+                
             }
         }
         

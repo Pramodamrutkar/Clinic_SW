@@ -356,9 +356,11 @@ class FormulaBuilderEngineController extends Controller
 					$casheAppModel = new CasheAppModel();
 					$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
 					$cashedata["lender_name"] = "CASHe";
-					$cashedata[]["offers"] = $casheOfferArray;
-					array_push($getData,$cashedata);
-					array_push($lender_name,"CASHe");
+					$cashedata["offers"][] = $casheOfferArray;
+					if(!empty($casheOfferArray)){
+						array_push($getData,$cashedata);
+						array_push($lender_name,"CASHe");
+					}
 				}
 				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
 		return $getData;

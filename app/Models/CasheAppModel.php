@@ -107,8 +107,8 @@ class CasheAppModel extends Model
             $offers[$key]['loanType'] = $value->loanType;
             $offers[$key]['offer_amount'] = $value->maxLoanEligibilityAmount;
             $offers[$key]['minLoanEligibilityAmount'] = $value->minLoanEligibilityAmount; 
-            $offers[$key]['offer_roi'] = $value->interestRate;
-            $offers[$key]['offer_pf'] = $value->processingFee;
+            $offers[$key]['offer_roi'] = number_format(floatval($value->interestRate), 2);
+            $offers[$key]['offer_pf'] = number_format(floatval($value->processingFee), 2);
             $offers[$key]['offer_tenure'] = $value->noOfInstallments;
             $offers[$key]['upfrontInterestDeductionPercentage'] = $value->upfrontInterestDeductionPercentage;
         }
