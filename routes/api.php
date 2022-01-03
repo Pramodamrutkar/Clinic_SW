@@ -37,6 +37,7 @@ Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
 Route::post('/create-cache-user/{app_id}', [CasheApp::class,'createUserWithCache']);
 
+
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
@@ -49,7 +50,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //we are using creditapp_uid id user/{app_id}
     Route::post('/return-user/{app_id}',[CreditProspectController::class, 'returnUserProfile']);
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
-    Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);    
+    Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);   
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
-    
+    Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheStatus']);
 });

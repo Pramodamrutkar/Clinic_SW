@@ -69,19 +69,36 @@ class MoneyViewAppModel extends Model
                 'message' => 'Empty Application ID'
             ],400);
         }
-        $lenderSystemId = '';
+        $upwardlenderSystemId = '';
         $upwardsAppModelData = UpwardsAppModel::select('upwards_app.lender_system_id','upwards_app.lender_customer_id')->where('creditapp_uid',$app_id)->first();
         if(!empty($upwardsAppModelData)){
-            $lenderSystemId = $upwardsAppModelData['lender_system_id'];
+            $upwardlenderSystemId = $upwardsAppModelData['lender_system_id'];
             $lenderCustomerId = $upwardsAppModelData['lender_customer_id'];
         }
-        if(!empty($lenderSystemId)){
+        if(!empty($upwardlenderSystemId)){
             $upwardsApp = new UpwardsAppModel();
-            $upwardStatus = $upwardsApp->getUpwardStatus($lenderSystemId,$lenderCustomerId);
+            $upwardStatus = $upwardsApp->getUpwardStatus($upwardlenderSystemId,$lenderCustomerId);
             $upwardModel = UpwardsAppModel::where("creditapp_uid",$app_id)->first();
             $upwardModel->mis_status = $upwardStatus ?? "";
             $upwardModel->save();
         }
+        $statusOnOff = ExternalConnectorsModel::externalConnects("CASHESTATUS");
+        if($statusOnOff == 1){
+            $cashelenderSystemId = 0;
+            $casheAppModelData = CasheAppModel::select('cashe_app.lender_system_id')->where('creditapp_uid',$app_id)->first();
+            if(!empty($casheAppModelData)){
+                $cashelenderSystemId = $casheAppModelData['lender_system_id'];
+                $casheApp = new CasheAppModel();
+                $responseCasheStatus = $casheApp->getCacheStatus($cashelenderSystemId);
+                if(!empty($responseCasheStatus)){
+                    if($responseCasheStatus["status"] === "OK"){
+                        $responseCasheStatus->mis_status = $responseCasheStatus["message"] ?? "";
+                    }
+                }
+                $responseCasheStatus->save();
+            }
+        }
+        
         // $offerData = DB::table('moneyview_app')
         // ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
         // ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
@@ -90,7 +107,7 @@ class MoneyViewAppModel extends Model
         // ->first();
 
         $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status','upwards_app.Iframe_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
-        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Journey_url')->where('creditapp_uid',$app_id)->first();
+        $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
         $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
     
         $offerData = array();

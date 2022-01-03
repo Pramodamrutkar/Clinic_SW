@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CasheAppModel;
 use Illuminate\Http\Request;
 #use Illuminate\support\Facades\DB;
 use App\Models\FormulaBuilderEngine;
@@ -31,6 +32,7 @@ class FormulaBuilderEngineController extends Controller
 		$birthDate = $CreditAppData->birth_date;
 		$postalCode = $CreditAppData->postal_code;
 		$employeementStatus = $CreditAppData->employment_status_code;
+		$mobilePhoneNumber = $CreditAppData->mobile_phone_number;
 		
 		$emailId = $CreditAppData->email;
 		$panId = $CreditAppData->tin;
@@ -107,10 +109,9 @@ class FormulaBuilderEngineController extends Controller
 		}
 		else if(!empty($new_arr))
 		{	
-			$statusOnOff = ExternalConnectorsModel::externalConnects('CALLTOUPWARDS');
 			
+			$statusOnOff = ExternalConnectorsModel::externalConnects('CALLTOUPWARDS');
 			if($statusOnOff == 1){
-					
 				$upwardModel = new UpwardsAppModel();
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
 				
@@ -348,6 +349,16 @@ class FormulaBuilderEngineController extends Controller
 						}	
 					}
 					
+				}
+
+				$statusOnOff = ExternalConnectorsModel::externalConnects('CHECKCASHEOFFERS');
+				if($statusOnOff == 1){
+					$casheAppModel = new CasheAppModel();
+					$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
+					$cashedata["lender_name"] = "CASHe";
+					$cashedata[]["offers"] = $casheOfferArray;
+					array_push($getData,$cashedata);
+					array_push($lender_name,"CASHe");
 				}
 				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
 		return $getData;

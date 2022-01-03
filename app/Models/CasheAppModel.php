@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CreditApp;
+use Mail;
 
 class CasheAppModel extends Model
 {
@@ -13,22 +14,29 @@ class CasheAppModel extends Model
     protected $primaryKey = "cashe_id";
     public $timestamps = true;
 
-    public function cacheOffers($request){
-        $creditAppData = CreditApp::where('creditapp_uuid',$request->creditapp_uid)->first();
-      
-        $responseduplicateStatus = $this->checkDuplicateOfferLead($creditAppData['mobile_phone_number'], $creditAppData['birth_date'],$creditAppData);
-        if($responseduplicateStatus["statusCode"] == 200){
-            if($responseduplicateStatus["duplicateStatusCode"] == 1){
-                $offerResponse = $this->getPlans($creditAppData->monthly_income);
+
+    public function casheOffers($mobile_phone_number,$birth_date,$monthly_income){
+        // $creditAppData = CreditApp::where('creditapp_uuid',$request->creditapp_uid)->first();
+        // if(empty($creditAppData)){
+        //     return response([
+        //         'success' => 'false',
+        //         'message' => 'Invalid app ID No data found'
+        //     ],400);
+        // }
+        $responseduplicateStatus = $this->checkDuplicateOfferLead($mobile_phone_number, $birth_date);
+         if($responseduplicateStatus["statusCode"] == 200){
+             if($responseduplicateStatus["duplicateStatusCode"] == 1){
+                $offerResponse = $this->getPlans($monthly_income);
                 $offers = $this->processCasheOffers($offerResponse);
-                return $offers;
-            }
-        }else{
-             return 0;
-        }
+                $cacheOffer = $this->getCasheRankWeightageOffer($offers);
+                return $cacheOffer;
+             }
+         }else{
+              return 0;
+         }
     }
 
-    public function checkDuplicateOfferLead($mobileno, $birthdate,$creditAppData){
+    public function checkDuplicateOfferLead($mobileno, $birthdate){
        
         $cachePartnerName = config('constants.cachePartnerName');
         $cacheBaseUrl = config('constants.cacheApiBaseUrl');
@@ -88,19 +96,21 @@ class CasheAppModel extends Model
     }
 
     public function processCasheOffers($offerResponse){
+     
         $paylodData = json_decode($offerResponse["payLoad"]);
+       
         $offers = array();
         foreach ($paylodData as $key => $value) {
-            $offers[$key]['Lender'] = "CASHe";
+            $offers[$key]['lender_name'] = "CASHe";
             $offers[$key]['LenderId'] = "twiyp8jcr-aimx-ivuw-736d-90ud1f8lp6";
             $offers[$key]['LenderUrl'] = "https://www.cashe.co.in/"; 
             $offers[$key]['loanType'] = $value->loanType;
-            $offers[$key]['maxLoanEligibilityAmount'] = $value->maxLoanEligibilityAmount;
+            $offers[$key]['offer_amount'] = $value->maxLoanEligibilityAmount;
             $offers[$key]['minLoanEligibilityAmount'] = $value->minLoanEligibilityAmount; 
-            $offers[$key]['interestRate'] = $value->interestRate;
-            $offers[$key]['noOfInstallments'] = $value->loanType;
-            $offers[$key]['loanType'] = $value->loanType;
-            $offers[$key]['upfrontInterestDeductionPercentage'] = $value->loanType;
+            $offers[$key]['offer_roi'] = $value->interestRate;
+            $offers[$key]['offer_pf'] = $value->processingFee;
+            $offers[$key]['offer_tenure'] = $value->noOfInstallments;
+            $offers[$key]['upfrontInterestDeductionPercentage'] = $value->upfrontInterestDeductionPercentage;
         }
         return $offers;
     }
@@ -149,8 +159,84 @@ class CasheAppModel extends Model
 
         $upwardModel = new UpwardsAppModel();
         $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-        dd($response);
+        return $response;
+    }
+
+    public function getCacheStatus($lender_system_id){
+        $cachePartnerName = config('constants.cachePartnerName');
+        $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+        
+        $payload = array(
+            'partner_name' => $cachePartnerName,
+            'partner_customer_id' => $lender_system_id
+        );
+      
+        $str = json_encode($payload);
+        $passphrase = config('constants.passphrase');
+        $checkSum = $this->generateCheckSum($str,$passphrase);
+
+        $appendTo = "customer_status";
+        $url = $cacheBaseUrl.$appendTo;
+        $headersArray = array(
+            "Check-Sum: $checkSum",
+            "Content-Type: application/json"
+        );
+     
+        $upwardModel = new UpwardsAppModel();
+        $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
         return $response;
     }
     
+    public function getCasheRankWeightageOffer($offers){
+    
+       $amountRanking = array_column($offers, "offer_amount");
+       $roiRanking = array_column($offers, "offer_roi");
+       $installmentRanking = array_column($offers, "offer_tenure");
+       arsort($amountRanking); //higher the better
+       asort($roiRanking); //lower the better
+       arsort($installmentRanking); //higher the better
+       $keyFromoffers = array_keys($amountRanking)[0];
+       $cacheOffer = $offers[$keyFromoffers];
+       return $cacheOffer;
+    }
+
+    public static function sendTemplateEmails($messagePage, $data, $attachment = ''){
+        Mail::send($messagePage, $data, function ($message) use ($data) {
+            $message->to($data['toEmail'])->subject($data['subject']);
+            $message->from('noreply@creditlinks.in', 'CreditLinks');
+            if (!empty($data['attachment'])) {
+                $message->attach($data['attachment']);
+            }
+        });
+    }
+
+    public function sendCasheDownloadLink($app_id){
+        $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
+        if(empty($creditAppData)){
+            return response([
+                'success' => 'false',
+                'message' => 'Invalid App ID'
+            ],400);
+        }
+        $email = "";
+        if(!empty($creditAppData["email"])){
+            $email = $creditAppData["email"];
+        }else{
+            return response([
+                'success' => 'false',
+                'message' => 'No email exist'
+            ],400);
+        }
+        $casheDownloadUrl = config('constants.cacheDownloadUrl');
+        $subject = "CASHe mobile app download information"; 
+        $firstName = $creditAppData["first_name"];
+        $data = array("toEmail" => $email, "subject" => $subject, "firstName" => $firstName,"casheDownloadUrl" => $casheDownloadUrl);
+        $messagePage = "cashetemplate";
+        self::sendTemplateEmails($messagePage,$data);
+        return response([
+            'success' => 'true',
+            'message' => 'Download Link has been sent successfully'
+        ],200);
+    }
+
 }

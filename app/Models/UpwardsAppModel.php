@@ -326,7 +326,19 @@ class UpwardsAppModel extends Model
                     'message' => 'Something went wrong'
                 ],400);
             }
-        }else if($request['lender_name'] == "CashE"){
+        }else if($request['lender_name'] == "CASHe"){
+
+            $casheLenderSystemId = 0;
+            $statusOnOff = ExternalConnectorsModel::externalConnects("CREATECASHEUSER");
+            if($statusOnOff == 1){
+                $upwardAppModel = new UpwardsAppModel();
+                $casheNewUserData = $upwardAppModel->createUserWithCache(trim($app_id));
+                if(!empty($casheNewUserData)){
+                    if($casheNewUserData["statusCode"] == 200){
+                        $casheLenderSystemId = $casheNewUserData["payLoad"];  
+                    }
+                }
+            }
             $casheObj = new CasheAppModel();
             $casheObj->creditapp_uid = trim($app_id); 
             $casheObj->cashe_uid = (string) Str::uuid(); 
@@ -334,12 +346,13 @@ class UpwardsAppModel extends Model
             $casheObj->annual_interest_rate = $request['annual_interest_rate'];
             $casheObj->term_months = $request['term_months'];
             $casheObj->processing_fees = $request['processing_fees'];
+            $casheObj->lender_system_id = $casheLenderSystemId ?? 0;
             $casheObj->mis_status = "Initiated";
             if($casheObj->save()){
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
-                    'cashe_uid' => $casheObj->cashe_uid
+                    'cashe_uid' => $casheObj->creditapp_uid
                 ],200);
             }else{
                 return Response([
