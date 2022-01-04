@@ -234,6 +234,7 @@ class UpwardsAppModel extends Model
         $upwardAffiliatedUserId = config('constants.upwardAffiliatedUserId');
         $upwardTokenData = $this->getUpwardAccessToken();
         $accessToken = $upwardTokenData['data']['affiliated_user_session_token'];
+        date_default_timezone_set("Asia/Kolkata");   
         $nowTime = date("Y-m-d\TH:i:s");
         $concatedString = $accessToken.$nowTime;
         $affiliate_hash = md5($concatedString); 

@@ -103,12 +103,10 @@ class MoneyViewAppModel extends Model
                     $cashelenderSystemId = $casheAppModel['lender_system_id'];
                     $casheApp = new CasheAppModel();
                     $responseCasheStatus = $casheApp->getCacheStatus($cashelenderSystemId);
+
                     if(!empty($responseCasheStatus)){
-                        if($responseCasheStatus["statusCode"] == 200){
-                            $casheAppModel->mis_status = $responseCasheStatus["message"];
-                        
-                            $casheAppModel->save();
-                        }
+                        $casheAppModel->mis_status = $responseCasheStatus;
+                        $casheAppModel->save();
                     }
                     
                 }

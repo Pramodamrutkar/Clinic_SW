@@ -54,5 +54,5 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
     Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);   
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
-    Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheStatus']);
+    Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheDownloadUrl']);
 });

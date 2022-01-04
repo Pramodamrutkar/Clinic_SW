@@ -38,11 +38,8 @@ class OtpController extends Controller
 
                 $application_name = config('constants.application_name');
                 $senderId = config('constants.sender');
-
-
                 $message = 'Here is your one-time password to complete your account profile with CreditLinks [CRLINK] ' . $otp;
                 $flag = $this->sendMessage($senderId, $mobileNo, $message, $phoneCode);
-
                 if ($flag == 0) {
                     return response([
                         'success' => 'fail',
@@ -60,7 +57,7 @@ class OtpController extends Controller
             //  $creditProspectdata = CreditProspect::where('email', $emailId)->first();
             //}
             $expireTime = config('constants.otpexpire');
-
+            
             $otpInsert = new Otp();
             $otpInsert->code = $otp;
             $otpInsert->otpuid = (string) Str::uuid();
@@ -73,6 +70,7 @@ class OtpController extends Controller
             }
             $otpInsert->user_id = empty($creditProspectdata['user_id']) ? 0 : $creditProspectdata['user_id']; // primary key of credit prospect table.
             $otpInsert->expire_otp_time = date("Y-m-d H:i:s", strtotime(date('Y-m-d H:i:s') . "$expireTime seconds"));
+            $otpInsert->context = $creditProspectdata["credituid"] ?? "";
             if ($otpInsert->save()) {
                 $maskId = $this->maskEmailOrPhone($otpInsert->device_locator);
                 return response([

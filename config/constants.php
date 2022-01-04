@@ -12,19 +12,33 @@ return [
 
     "templateId" => "1007534419559657571",
 
+    //for UAT
     "upwardApiBaseUrl" => "https://uat1.upwards.in/af/",
     "upwardIframeBaseUrl" => "https://uat1.web.upwards.in/affiliate/?",
     "upwardAffiliatedUserId" => "37",
     "upwardSecret" => "ctg760r8n1RzFVESmFyPHSBUCG9lpaO5",
 
+    //for production
+    // "upwardApiBaseUrl" => "https://leads.backend.upwards.in/af/",
+    // "upwardIframeBaseUrl" => "https://app.upwards.in/affiliate/?",
+    // "upwardAffiliatedUserId" => "36",
+    // "upwardSecret" => "lTQd6Z71yL9rKgY02prIZpaEjekxe8vu",
+
     "moneyviewApiBaseUrl" => "https://uat-atlas.whizdm.com/atlas/",
     "moneyviewPartnerCode" => "21",
     "moneyviewUserName" => "creditlink",
-     
+    
+    //for UAT
     "cacheApiBaseUrl" => "https://test-partners.cashe.co.in/partner/",
     "cacheDownloadUrl" => "https://smarturl.it/CASHe_Website",
     "cachePartnerName" => "CreditLinks_Partner",
     "passphrase" => 'CreditLinks@PRdC8$He$2o!#'
+
+    //for Production
+    // "cacheApiBaseUrl" => "https://partners.cashe.co.in/partner/",
+    // "cacheDownloadUrl" => "https://smarturl.it/CreditLinks_Partner",
+    // "cachePartnerName" => "CreditLinks_Partner",
+    // "passphrase" => 'CreditLinks@bje#$Rwd2[$UdGS6'
     
 ];
 

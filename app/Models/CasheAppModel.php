@@ -227,7 +227,10 @@ class CasheAppModel extends Model
         
             $upwardModel = new UpwardsAppModel();
             $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-            return $response;
+            if($response["statusCode"] == 200){
+                $lapStatus = OfferStatusModel::getLapStatus("CASHe",$response["message"]);
+                return $lapStatus;
+            }
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
