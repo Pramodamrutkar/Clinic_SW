@@ -12,6 +12,7 @@ use App\Models\OfferWeightage;
 use App\Models\CreditApp;
 use App\Models\UpwardsAppModel;
 use App\Models\ExternalConnectorsModel;
+use App\Models\ErrorLogModel;
 use DateTime;
 use DB;
 class FormulaBuilderEngineController extends Controller
@@ -114,8 +115,15 @@ class FormulaBuilderEngineController extends Controller
 			if($statusOnOff == 1){
 				$upwardModel = new UpwardsAppModel();
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
-				
+				if($upwardData["data"]["is_eligible"] === true){
+					$code = 3900;
+					$message = "Upwards: Eligible for the loan";
+					ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
+				 }
 				if($upwardData["data"]["is_eligible"] === false){
+					$code = 3901;
+					$message = "Upwards: Not Eligible for the loan";
+					ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
 					for($i=0;$i < count($new_arr); $i++){
 						if(stripos($new_arr[$i],"upward") === 0){
 							unset($new_arr[$i]);

@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use App\Models\CreditApp;
 use Mail;
+use Exception;
 
 class CasheAppModel extends Model
 {
@@ -25,11 +27,25 @@ class CasheAppModel extends Model
         // }
         $responseduplicateStatus = $this->checkDuplicateOfferLead($mobile_phone_number, $birth_date);
          if($responseduplicateStatus["statusCode"] == 200){
+             //not duplicate
              if($responseduplicateStatus["duplicateStatusCode"] == 1){
                 $offerResponse = $this->getPlans($monthly_income);
                 $offers = $this->processCasheOffers($offerResponse);
                 $cacheOffer = $this->getCasheRankWeightageOffer($offers);
+                $code = 4000;
+                $message = "CASHe: No Duplicate Status code";
+                ErrorLogModel::LogError($status = 200, $code, $message,$mobile_phone_number);
                 return $cacheOffer;
+             }
+             if($responseduplicateStatus["duplicateStatusCode"] == 2){
+                $code = 4001;
+                $message = "CASHe: DUPLICATE FROM SAME DOMAIN";
+                ErrorLogModel::LogError($status = 200, $code, $message,$mobile_phone_number);
+             }
+             if($responseduplicateStatus["duplicateStatusCode"] == 3){
+                $code = 4002;
+                $message = "CASHe: DUPLICATE FROM OTHER DOMAIN";
+                ErrorLogModel::LogError($status = 200, $code, $message,$mobile_phone_number);
              }
          }else{
               return 0;
@@ -37,31 +53,37 @@ class CasheAppModel extends Model
     }
 
     public function checkDuplicateOfferLead($mobileno, $birthdate){
-       
-        $cachePartnerName = config('constants.cachePartnerName');
-        $cacheBaseUrl = config('constants.cacheApiBaseUrl');
-        $bDate =  date("d-m-Y", strtotime($birthdate));  
+        try{
+            $cachePartnerName = config('constants.cachePartnerName');
+            $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+            $bDate =  date("d-m-Y", strtotime($birthdate));  
+            
+            $payload = array(
+                'partner_name' => $cachePartnerName,
+                'last_five_digits_of_mobile' => substr($mobileno,5),
+                'date_of_birth' => $bDate
+            );
         
-        $payload = array(
-            'partner_name' => $cachePartnerName,
-            'last_five_digits_of_mobile' => substr($mobileno,5),
-            'date_of_birth' => $bDate
-        );
-      
-        $str = json_encode($payload);
-        $passphrase = config('constants.passphrase');
-    
-        $checkSum = $this->generateCheckSum($str,$passphrase);
+            $str = json_encode($payload);
+            $passphrase = config('constants.passphrase');
+        
+            $checkSum = $this->generateCheckSum($str,$passphrase);
 
-        $appendTo = "checkDuplicateCustomerLead";
-        $url = $cacheBaseUrl.$appendTo;
-        $headersArray = array(
-            "Check-Sum: $checkSum",
-            "Content-Type: application/json"
-        );
-        $upwardModel = new UpwardsAppModel();
-        $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-        return $response;
+            $appendTo = "checkDuplicateCustomerLead";
+            $url = $cacheBaseUrl.$appendTo;
+            $headersArray = array(
+                "Check-Sum: $checkSum",
+                "Content-Type: application/json"
+            );
+            $upwardModel = new UpwardsAppModel();
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            return $response;
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            echo ErrorLogModel::genericMessage();
+        }
     }
 
     public function generateCheckSum($data, $key){
@@ -71,28 +93,36 @@ class CasheAppModel extends Model
     }
 
     public function getPlans($salary){
-        $cachePartnerName = config('constants.cachePartnerName');
-        $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+        try{
+            $cachePartnerName = config('constants.cachePartnerName');
+            $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+            
+            $payload = array(
+                'partner_name' => $cachePartnerName,
+                'salary' => $salary
+            );
         
-        $payload = array(
-            'partner_name' => $cachePartnerName,
-            'salary' => $salary
-        );
-      
-        $str = json_encode($payload);
-        $passphrase = config('constants.passphrase');
-        $checkSum = $this->generateCheckSum($str,$passphrase);
+            $str = json_encode($payload);
+            $passphrase = config('constants.passphrase');
+            $checkSum = $this->generateCheckSum($str,$passphrase);
 
-        $appendTo = "fetchCashePlans/salary";
-        $url = $cacheBaseUrl.$appendTo;
-        $headersArray = array(
-            "Check-Sum: $checkSum",
-            "Content-Type: application/json"
-        );
+            $appendTo = "fetchCashePlans/salary";
+            $url = $cacheBaseUrl.$appendTo;
+            $headersArray = array(
+                "Check-Sum: $checkSum",
+                "Content-Type: application/json"
+            );
 
-        $upwardModel = new UpwardsAppModel();
-        $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-        return $response;
+            $upwardModel = new UpwardsAppModel();
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            return $response;
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = "CASHe".$e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$cachePartnerName);
+            echo ErrorLogModel::genericMessage();
+        }
+        
     }
 
     public function processCasheOffers($offerResponse){
@@ -116,75 +146,94 @@ class CasheAppModel extends Model
     }
 
     public function createUserWithCache($app_id){
-        $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
-       
-        if(empty($creditAppData)){
-            return Response([
-                'status' => 'false',
-                'message' => 'Invalid Application ID for CASHe'
-            ],400);
-        }
+        try{
+            $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
         
-        $cachePartnerName = config('constants.cachePartnerName');
-        $passphrase = config('constants.passphrase');
-        $cacheBaseUrl = config('constants.cacheApiBaseUrl');
-        $requestUrl = "create_customer";
+            if(empty($creditAppData)){
+                return Response([
+                    'status' => 'false',
+                    'message' => 'Invalid Application ID for CASHe'
+                ],400);
+            }
+            
+            $cachePartnerName = config('constants.cachePartnerName');
+            $passphrase = config('constants.passphrase');
+            $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+            $requestUrl = "create_customer";
+            
+            $payload = array();
+            $payload['partner_name'] = $cachePartnerName;
+            $payload['Personal Information']['First Name'] = $creditAppData["first_name"];
+            $payload['Personal Information']['Last Name'] = $creditAppData["last_name"];
+            $payload['Personal Information']['DOB'] = date("d-m-Y",strtotime($creditAppData["birth_date"]));
+            $payload['Personal Information']['Address Line1'] = $creditAppData["address1"];
+            $payload['Personal Information']['Address Line2'] = $creditAppData["address1"];
+            $payload['Personal Information']['Pincode'] = $creditAppData["postal_code"];
+            $payload['Personal Information']['City'] = $creditAppData["city"];
+            $payload['Personal Information']['State'] = $creditAppData["state"];
+            $payload['Personal Information']['PAN'] = $creditAppData["tin"];
+
+            $payload['Applicant Information']['Employment Type'] = SmartList::getFieldDescription($creditAppData["employment_status_code"]) == "Wrkr" ? "Salaried" : "Other";
+
+            $payload['Contact Information']['Mobile'] = $creditAppData["mobile_phone_number"];
+            $payload['Contact Information']['Email Id'] = $creditAppData["email"];
         
-        $payload = array();
-        $payload['partner_name'] = $cachePartnerName;
-        $payload['Personal Information']['First Name'] = $creditAppData["first_name"];
-        $payload['Personal Information']['Last Name'] = $creditAppData["last_name"];
-        $payload['Personal Information']['DOB'] = date("d-m-Y",strtotime($creditAppData["birth_date"]));
-        $payload['Personal Information']['Address Line1'] = $creditAppData["address1"];
-        $payload['Personal Information']['Address Line2'] = $creditAppData["address1"];
-        $payload['Personal Information']['Pincode'] = $creditAppData["postal_code"];
-        $payload['Personal Information']['City'] = $creditAppData["city"];
-        $payload['Personal Information']['State'] = $creditAppData["state"];
-        $payload['Personal Information']['PAN'] = $creditAppData["tin"];
+            $str = json_encode($payload);
+        
+            $checkSum = $this->generateCheckSum($str,$passphrase);
+        
+            $url = $cacheBaseUrl.$requestUrl;
+            $headersArray = array(
+                "Check-Sum: $checkSum",
+                "Content-Type: application/json"
+            );
 
-        $payload['Applicant Information']['Employment Type'] = SmartList::getFieldDescription($creditAppData["employment_status_code"]) == "Wrkr" ? "Salaried" : "Other";
-
-        $payload['Contact Information']['Mobile'] = $creditAppData["mobile_phone_number"];
-        $payload['Contact Information']['Email Id'] = $creditAppData["email"];
-       
-        $str = json_encode($payload);
-    
-        $checkSum = $this->generateCheckSum($str,$passphrase);
-       
-        $url = $cacheBaseUrl.$requestUrl;
-        $headersArray = array(
-            "Check-Sum: $checkSum",
-            "Content-Type: application/json"
-        );
-
-        $upwardModel = new UpwardsAppModel();
-        $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-        return $response;
+            $upwardModel = new UpwardsAppModel();
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            return $response;
+        } catch (QueryException $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            echo ErrorLogModel::genericMessage();
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            echo ErrorLogModel::genericMessage();
+        }    
     }
 
     public function getCacheStatus($lender_system_id){
-        $cachePartnerName = config('constants.cachePartnerName');
-        $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+        try{
+            $cachePartnerName = config('constants.cachePartnerName');
+            $cacheBaseUrl = config('constants.cacheApiBaseUrl');
+            
+            $payload = array(
+                'partner_name' => $cachePartnerName,
+                'partner_customer_id' => $lender_system_id
+            );
         
-        $payload = array(
-            'partner_name' => $cachePartnerName,
-            'partner_customer_id' => $lender_system_id
-        );
-      
-        $str = json_encode($payload);
-        $passphrase = config('constants.passphrase');
-        $checkSum = $this->generateCheckSum($str,$passphrase);
+            $str = json_encode($payload);
+            $passphrase = config('constants.passphrase');
+            $checkSum = $this->generateCheckSum($str,$passphrase);
 
-        $appendTo = "customer_status";
-        $url = $cacheBaseUrl.$appendTo;
-        $headersArray = array(
-            "Check-Sum: $checkSum",
-            "Content-Type: application/json"
-        );
-     
-        $upwardModel = new UpwardsAppModel();
-        $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
-        return $response;
+            $appendTo = "customer_status";
+            $url = $cacheBaseUrl.$appendTo;
+            $headersArray = array(
+                "Check-Sum: $checkSum",
+                "Content-Type: application/json"
+            );
+        
+            $upwardModel = new UpwardsAppModel();
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            return $response;
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            echo ErrorLogModel::genericMessage();
+        }
     }
     
     public function getCasheRankWeightageOffer($offers){
@@ -211,32 +260,44 @@ class CasheAppModel extends Model
     }
 
     public function sendCasheDownloadLink($app_id){
-        $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
-        if(empty($creditAppData)){
+        try{
+            $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
+            if(empty($creditAppData)){
+                return response([
+                    'success' => 'false',
+                    'message' => 'Invalid App ID'
+                ],400);
+            }
+            $email = "";
+            if(!empty($creditAppData["email"])){
+                $email = $creditAppData["email"];
+            }else{
+                return response([
+                    'success' => 'false',
+                    'message' => 'No email exist'
+                ],400);
+            }
+            $casheDownloadUrl = config('constants.cacheDownloadUrl');
+            $subject = "CASHe mobile app download information"; 
+            $firstName = $creditAppData["first_name"];
+            $data = array("toEmail" => $email, "subject" => $subject, "firstName" => $firstName,"casheDownloadUrl" => $casheDownloadUrl);
+            $messagePage = "cashetemplate";
+            self::sendTemplateEmails($messagePage,$data);
             return response([
-                'success' => 'false',
-                'message' => 'Invalid App ID'
-            ],400);
+                'success' => 'true',
+                'message' => 'Download Link has been sent successfully'
+            ],200);
+        } catch (QueryException $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            echo ErrorLogModel::genericMessage();
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            echo ErrorLogModel::genericMessage();
         }
-        $email = "";
-        if(!empty($creditAppData["email"])){
-            $email = $creditAppData["email"];
-        }else{
-            return response([
-                'success' => 'false',
-                'message' => 'No email exist'
-            ],400);
-        }
-        $casheDownloadUrl = config('constants.cacheDownloadUrl');
-        $subject = "CASHe mobile app download information"; 
-        $firstName = $creditAppData["first_name"];
-        $data = array("toEmail" => $email, "subject" => $subject, "firstName" => $firstName,"casheDownloadUrl" => $casheDownloadUrl);
-        $messagePage = "cashetemplate";
-        self::sendTemplateEmails($messagePage,$data);
-        return response([
-            'success' => 'true',
-            'message' => 'Download Link has been sent successfully'
-        ],200);
     }
 
 }

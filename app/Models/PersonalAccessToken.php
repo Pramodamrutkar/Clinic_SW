@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
+use Exception;
 
 class PersonalAccessToken extends Model
 {
@@ -28,9 +30,17 @@ class PersonalAccessToken extends Model
     }
 
     public static function checkTokenExpire($token,$tokenId){
-        $expiryTime = date("Y-m-d H:i:s");
-        $tokenCount = PersonalAccessToken::where("token",trim($token))->where("token_id",trim($tokenId))->where('expire_at', '>=', $expiryTime)->count();
+        try{
+            $expiryTime = date("Y-m-d H:i:s");
+            $tokenCount = PersonalAccessToken::where("token",trim($token))->where("token_id",trim($tokenId))->where('expire_at', '>=', $expiryTime)->count();
         return $tokenCount;
+        } catch (QueryException $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+        } catch (Exception $e) {
+            abort(500, "Could not process a request");
+        }
     }
 
 }

@@ -11,7 +11,9 @@ class MerchantModel extends Model
 
     protected $table = "merchant";
     
-    protected $primaryKey = "merchant_id";
+    protected $primaryKey = "merchant_uid";
+
+    public $incrementing = false;
     
     public $timestamps = false; 
 

@@ -28,14 +28,16 @@ Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
 Route::post('/lap/authenticate',[PersonalAccessTokenController::class,'lapAuthenticate']);
+
+//update data from sf & show data to sf.
 Route::put('/process/form/{id}',[CreditProspectController::class,'patchSftoLap']);
 Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 
 //Route::post('/application/{app_id}', [CreditProspectController::class,'storeDatatoSF']);
 //Route::post('/upward-status', [UpwardsApp::class,'checkUpwardStatus']);
 //Route::post('/upward-token', [UpwardsApp::class,'upwardAccessToken']);
-Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
-Route::post('/create-cache-user/{app_id}', [CasheApp::class,'createUserWithCache']);
+//Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
+//Route::post('/create-cache-user/{app_id}', [CasheApp::class,'createUserWithCache']);
 
 
 Route::group(['middleware' => ['jwt.verify']], function () {
@@ -45,9 +47,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('/smartlist', [SmartListController::class, 'index']);
     Route::post('/moneyview/{app_id}', [MoneyViewApp::class, 'storeMoneyView']);
     Route::post('/upwards/{app_id}', [UpwardsApp::class, 'storeUpwards']);
-    //we are using prospect id user/{app_id}
+    //using prospect id user/{app_id}
     Route::get('/user/{app_id}',[CreditProspectController::class, 'userDetails']);
-    //we are using creditapp_uid id user/{app_id}
+    //using creditapp_uid id user/{app_id}
     Route::post('/return-user/{app_id}',[CreditProspectController::class, 'returnUserProfile']);
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
     Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);   
