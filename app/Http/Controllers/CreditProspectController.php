@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CreditApp;
 use App\Models\CreditProspect;
+use App\Models\InternalReportModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Http\Response;
@@ -71,5 +72,5 @@ class CreditProspectController extends Controller
       $response = $creditobj->patchPersonalData($request,$id);
       return $response;
     }
-
+    
 }

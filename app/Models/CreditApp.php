@@ -330,7 +330,7 @@ class CreditApp extends Model
             if (empty($creditProspectData)) {
                 return response([
                     'success' => 'false',
-                    'message' => 'Invalid Birthdate or TIN'
+                    'message' => 'Invalid PAN or Birthdate'
                 ], 400);
             }
             if ($request->is_existing == 1) {
