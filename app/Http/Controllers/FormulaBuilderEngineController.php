@@ -100,8 +100,8 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}else if($value->lender_name == 'MoneyView'){
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
-			}else if($value->lender_name == 'cache_app'){
-				$lendersMainArray[$value->lender_name][] = $value->offer_name;
+			}else {
+				$lendersMainArray[$value->lender_name][] = "CASHe";
 			}
 		}		
 		if(empty($new_arr))
@@ -115,23 +115,42 @@ class FormulaBuilderEngineController extends Controller
 			if($statusOnOff == 1){
 				$upwardModel = new UpwardsAppModel();
 				$upwardData = $upwardModel->checkUpwardsEligibility($emailId,$panId);
-				if($upwardData["data"]["is_eligible"] === true){
-					$code = 3900;
-					$message = "Upwards: Eligible for the loan";
-					ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
-				 }
-				if($upwardData["data"]["is_eligible"] === false){
-					$code = 3901;
-					$message = "Upwards: Not Eligible for the loan";
-					ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
-					for($i=0;$i < count($new_arr); $i++){
-						if(stripos($new_arr[$i],"upward") === 0){
-							unset($new_arr[$i]);
+				if(!empty($upwardData["data"])){
+					if($upwardData["data"]["is_eligible"] === true){
+						$code = 3900;
+						$message = "Upwards: Eligible for the loan";
+						ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
+					 }
+					if($upwardData["data"]["is_eligible"] === false){
+						for($i=0;$i < count($new_arr); $i++){
+							if(stripos($new_arr[$i],"upward") === 0){
+								unset($new_arr[$i]);
+							}
 						}
-					}	
+						$code = 3901;
+						$message = "Upwards: Not Eligible for the loan";
+						ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);	
+					}
+				}else{
+						$code = 3902;
+						$message = "Upwards: Empty response from upward eligibiltiy";
+						ErrorLogModel::LogError($status = 200, $code, $message,$creditAppUUID);
+						for($i=0;$i < count($new_arr); $i++){
+							if(stripos($new_arr[$i],"upward") === 0){
+								unset($new_arr[$i]);
+							}
+						}	
 				}
-			}		
-		
+			}
+			
+			$statusOnOff = ExternalConnectorsModel::externalConnects('CHECKCASHEOFFERS');
+			if($statusOnOff == 1){
+				$casheAppModel = new CasheAppModel();
+				$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
+				if(!empty($casheOfferArray)){
+					$lendersMainArray['CASHe'][] = "CASHe";
+				}
+			}
 			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
 			
 		}
@@ -255,8 +274,9 @@ class FormulaBuilderEngineController extends Controller
 	
 				$Final_array = array_chunk($main_array,3);							
 				
-					
+				
 				$getData = $this->my_array_merge($array1, $Final_array);
+		
 		//Read code from here and sort array whose total ranking is less
 				foreach($getData as $key => $v)
 				{	
@@ -287,7 +307,7 @@ class FormulaBuilderEngineController extends Controller
 						unset($getData[$key]['offer_pf_3']);
 							
 					}else{
-						if ($a <= $b && $a <= $c)
+						if ($a >= $b && $a >= $c)
 						{
 							$getData[$key]['offers'][0]['total_ranking_offer'];
 							unset($getData[$key]['offers'][1]);
@@ -358,19 +378,24 @@ class FormulaBuilderEngineController extends Controller
 					}
 					
 				}
-
-				$statusOnOff = ExternalConnectorsModel::externalConnects('CHECKCASHEOFFERS');
-				if($statusOnOff == 1){
-					$casheAppModel = new CasheAppModel();
-					$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
-					$cashedata["lender_name"] = "CASHe";
-					$cashedata["offers"][] = $casheOfferArray;
-					if(!empty($casheOfferArray)){
-						array_push($getData,$cashedata);
-						array_push($lender_name,"CASHe");
+				if(!empty($new_arr)){
+					$statusOnOff = ExternalConnectorsModel::externalConnects('CHECKCASHEOFFERS');
+					if($statusOnOff == 1){
+						$casheAppModel = new CasheAppModel();
+						$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
+						$cashedata["lender_name"] = "CASHe";
+						$cashedata["offers"][] = $casheOfferArray;
+						if(!empty($casheOfferArray)){
+							array_push($getData,$cashedata);
+							array_push($lender_name,"CASHe");
+							$lendersMainArray['CASHe'][] = "CASHe";
+						}
 					}
 				}
+				
+			
 				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
+			
 		return $getData;
     }
 	
@@ -433,7 +458,7 @@ class FormulaBuilderEngineController extends Controller
 
 		}
 
-		if(in_array('cashe_app',$lender_name))
+		if(in_array('CASHe',$lender_name))
 		{
 			$casheData =DB::table('cashe_app')
 			->select('*')
@@ -442,14 +467,14 @@ class FormulaBuilderEngineController extends Controller
 			$casheData = $casheData->count();
 			if(!empty($casheData))
 			{	
-				foreach ($lendersMainArray['cashe_app'] as $key1 => $value) {
+				foreach ($lendersMainArray['CASHe'] as $key1 => $value) {
 					if (($key = array_search($arr, $value)) !== false) {
 						unset($arr[$key]);
 					}
 				}
 			}
 		}
-	
+		
 		return $arr;
 		
 

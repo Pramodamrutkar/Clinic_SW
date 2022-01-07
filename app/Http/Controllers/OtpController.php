@@ -326,7 +326,7 @@ class OtpController extends Controller
                 $obj->email = $request['email'];
                 $obj->mobile_phone_code = $request['mobile_phone_code'];
                 $obj->mobile_phone_number = $request['mobile_phone_number'];
-                $obj->merchant_tracking_id = empty($merchantData->merchant_uid) ? "" : $merchantData->merchant_uid;
+                $obj->merchant_tracking_id = empty($request->url_segment) ? "" : $request->url_segment;
                 $obj->merchant_name = empty($merchantData->name) ? "" : $merchantData->name;
                 $obj->merchant_location_id = empty($merchantData->merchant_location_uid) ? "" : $merchantData->merchant_location_uid;
                 $obj->is_consent_accept = $request['is_consent_accept'];

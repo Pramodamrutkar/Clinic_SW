@@ -321,7 +321,7 @@ class CreditApp extends Model
             $tin = trim($request->tin);
             $creditProspectId = trim($request->credit_prospect_id);
             $creditProspectData = DB::table('credit_app')
-                ->leftJoin('credit_prospect', 'credit_prospect.credituid', '=', 'credit_app.creditprospect_uuid')
+                //->leftJoin('credit_prospect', 'credit_prospect.credituid', '=', 'credit_app.creditprospect_uuid')
                 ->where('credit_app.birth_date', $birthdate)
                 ->where('credit_app.tin', $tin)
                 ->where('credit_app.creditprospect_uuid', $creditProspectId)
