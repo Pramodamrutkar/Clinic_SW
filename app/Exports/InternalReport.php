@@ -3,9 +3,13 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Events\AfterSheet;
 use DB;
 
-class InternalReport implements FromCollection
+class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSize
 {   
 
     /**
@@ -51,5 +55,24 @@ class InternalReport implements FromCollection
             );
         } 
         return collect($headingsData);
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $event->sheet->getStyle('A1:AD1')->applyFromArray([
+                    'font' => [
+                        'bold' => true
+                    ]
+                ]);
+            }
+        ];
+    }
+
+    public function title(): string
+    {
+        $title = "Main";
+        return $title; 
     }
 }
