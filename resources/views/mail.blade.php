@@ -18,7 +18,7 @@
         <div>
             <p> Dear Customer,</p>
             <p> Here is your one-time password</p>
-            <p style="padding: 5px 5px 5px 10px;letter-spacing: 10px;border: 2px solid skyblue;width: 112px;text-align: center;font-weight: 700;color: #739feb;">{{ $otp }}</p>
+            <p style="padding: 5px 5px 5px 10px;letter-spacing: 10px;border: 2px solid skyblue;width: 122px;text-align: center;font-weight: 700;color: #739feb;">{{ $otp }}</p>
             <br/>
             <p>Use this to complete your account profile with CreditLinks. We will never contact you for this code
             <br>Do not reveal it with anyone else.</p>

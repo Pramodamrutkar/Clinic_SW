@@ -27,6 +27,7 @@ return [
     "moneyviewApiBaseUrl" => "https://uat-atlas.whizdm.com/atlas/",
     "moneyviewPartnerCode" => "21",
     "moneyviewUserName" => "creditlink",
+    "moneyviewPassword" => "7@JCFZSg26fA",
     
     //for UAT
     "cacheApiBaseUrl" => "https://test-partners.cashe.co.in/partner/",

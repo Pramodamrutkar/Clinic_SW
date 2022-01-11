@@ -23,5 +23,9 @@ class MoneyViewApp extends Controller
         return $response;
     }
 
-  
+    public function getMToken($lenderId){
+        $moneyViewApp = new MoneyViewAppModel();
+        $response = $moneyViewApp->getJourneyUrl($lenderId);
+        return $response;
+    }
 }

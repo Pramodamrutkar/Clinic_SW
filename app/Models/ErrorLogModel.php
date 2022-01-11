@@ -29,4 +29,11 @@ class ErrorLogModel extends Model
          ); 
         return json_encode($arr);
     }
+
+    public  function genericMsg(){
+        return Response([
+            'success' => 'false',
+            'message' => 'Unfortunately, we are not able to proceed with your request. Please try again.'
+        ],400);
+    }
 }

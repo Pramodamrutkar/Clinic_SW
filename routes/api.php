@@ -9,6 +9,7 @@ use App\Http\Controllers\UpwardsApp;
 use App\Http\Controllers\FormulaBuilderEngineController;
 use App\Http\Controllers\PersonalAccessTokenController;
 use App\Http\Controllers\InternalReportExportController;
+use App\Http\Controllers\Merchant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,7 +40,9 @@ Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 //Route::post('/upward-token', [UpwardsApp::class,'upwardAccessToken']);
 //Route::post('/cache-offers', [CasheApp::class,'getCasheOffers']);
 //Route::post('/create-cache-user/{app_id}', [CasheApp::class,'createUserWithCache']);
+//Route::get('/mv-token1/{id}', [MoneyViewApp::class,'getMToken']);
 
+Route::get('/generate-merchant-qr/{num}', [Merchant::class, 'saveMerchantData']);
 Route::get('/data-sp', [InternalReportExportController::class,'export']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {

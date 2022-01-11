@@ -20,7 +20,7 @@
             <p>
             <div>To continue your loan application you must download CASHe’s mobile app. </div>
             <div> You can download now from:</div>
-            <p style='display: flex; align-items:center;'><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' width='142' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' /></a><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' height='35' style='padding: 9px 0;' width='142' src='https://1000logos.net/wp-content/uploads/2020/08/apple-app-store-logo.jpg' /></a></p>
+            <p style='display: flex; align-items:center;'><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' width='170' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' /></a><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' height='44' style='padding: 9px 0;' width='170' src='https://1000logos.net/wp-content/uploads/2020/08/apple-app-store-logo.jpg' /></a></p>
             </p><br />
             <p>
             <div>CreditLinks Team </div>

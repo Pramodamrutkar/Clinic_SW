@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use App\Models\CreditApp;
 use App\Models\CasheAppModel;
 use App\Models\UpwardsAppModel;
+use App\Models\OfferStatusModel;
 use DB;
 use Exception;
 
@@ -29,28 +30,36 @@ class MoneyViewAppModel extends Model
                     'message' => 'Invalid AppID'
                 ],400);
             }
-            $this->moneyview_uid = (string) Str::uuid();
-            $this->creditapp_uid = trim($app_id);
-            $this->residency_type = $request['residency_type'];
-            $this->gender = $request['gender'];
-            $this->educational_level = $request['educational_level'];
-            $this->salary_payment_mode = $request['salary_payment_mode'];
-            $this->prefer_net_banking = $request['prefer_net_banking'];
-            $this->term_of_use = $request['term_of_use'];
-            $this->lender_system_id = $request['lender_system_id'];
-            $this->journey_url = $request['journey_url'];
-            $this->amount = $request['amount'];
-            $this->emi = $request['emi'];
-            $this->annual_interest_rate = $request['annual_interest_rate'];
-            $this->term_months = $request['term_months'];
-            $this->merchant_tracking_id = $request['merchant_tracking_id'];
-            $this->lender_created = $request['lender_created'];
-            $this->processing_fees = $request['processing_fees'];
-            if($this->save()){
+
+            $moneyViewUpdateData = MoneyViewAppModel::where('creditapp_uid',$app_id)->first();
+        
+            if(empty($moneyViewUpdateData)){
+                return Response([
+                    'status' => 'fail',
+                    'message' => 'No Applied loan exist'
+                ],400);
+            }
+            //$moneyViewUpdateData->moneyview_uid = (string) Str::uuid();
+            //$this->creditapp_uid = trim($app_id);
+            $moneyViewUpdateData->residency_type = $request['residency_type'];
+            $moneyViewUpdateData->gender = $request['gender'];
+            $moneyViewUpdateData->educational_level = $request['educational_level'];
+            $moneyViewUpdateData->salary_payment_mode = $request['salary_payment_mode'];
+            $moneyViewUpdateData->prefer_net_banking = $request['prefer_net_banking'];
+            $moneyViewUpdateData->term_of_use = $request['term_of_use'] ?? 1;
+            $moneyViewUpdateData->emi = $request['emi'];
+            $moneyViewUpdateData->merchant_tracking_id = $request['merchant_tracking_id'];
+            $moneyViewUpdateData->lender_created = $request['lender_created'] ?? date("Y-m-d");
+        
+            $lenderSystemId = $this->mvCreateLead($app_id,$moneyViewUpdateData);
+            $moneyViewUpdateData->lender_system_id = $lenderSystemId;
+            $moneyViewUpdateData->journey_url = $this->getJourneyUrl($lenderSystemId);
+            dd($moneyViewUpdateData);
+            if($moneyViewUpdateData->save()){
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
-                    'moneyview_uid' => $this->moneyview_uid
+                    'moneyview_uid' => $moneyViewUpdateData->moneyview_uid
                 ],200);
             }else{
                 return Response([
@@ -62,12 +71,14 @@ class MoneyViewAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -112,6 +123,15 @@ class MoneyViewAppModel extends Model
                 }
             }
             
+            $moneyViewUpdateData = MoneyViewAppModel::select('*')->where('creditapp_uid',$app_id)->first();
+            if(!empty($moneyViewUpdateData)){
+                $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
+                if(!empty($mvLenderSystemId)){
+                    $moneyViewUpdateData->mis_status = $this->getMvStatus($mvLenderSystemId);
+                    $moneyViewUpdateData->save();
+                }
+            }
+
             // $offerData = DB::table('moneyview_app')
             // ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
             // ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
@@ -160,5 +180,208 @@ class MoneyViewAppModel extends Model
         }
     }
 
+    public function getMoneyviewAccessToken(){
+        try{
+            $moneyviewPartnerCode = config('constants.moneyviewPartnerCode');
+            $moneyviewUserName = config('constants.moneyviewUserName');
+            $moneyviewPassword = config('constants.moneyviewPassword');
+            $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
+            
+            $tokenUrl = "v1/token";
+            $url = $moneyViewBaseUrl.$tokenUrl;
+
+            $payload = array(
+                "userName" => $moneyviewUserName,
+                "password" => $moneyviewPassword,
+                "partnerCode" => $moneyviewPartnerCode
+            );
+            $headersArray = array('Content-Type: application/json');
+            $upwardAppModel = new UpwardsAppModel();
+            $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
+            if(!empty($response)){
+                if($response["status"] == "success"){
+                    return $response["token"];    
+                }
+            }else{
+                $message = "Unable to get access token for Moneyview service";
+                ErrorLogModel::LogError($status = 400, 400, $message);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }
+        } catch (QueryException $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+    }
     
+    public function mvCreateLead($appId,$mvData){
+        try{
+            $creditAppData = CreditApp::where("creditapp_uuid",$appId)->first();
+            $moneyviewPartnerCode = config('constants.moneyviewPartnerCode');
+            $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
+            
+            $createLead = "v1/lead";
+            $url = $moneyViewBaseUrl.$createLead;
+
+            $token = $this->getMoneyviewAccessToken();
+            $payload = array();
+            $payload["partnerCode"] = $moneyviewPartnerCode;
+            $payload["partnerRef"] = $appId;
+            $payload["phone"] = $creditAppData["mobile_phone_number"];
+            $payload["pan"] =  $creditAppData["tin"];
+            $payload["name"] = $creditAppData["first_name"]." ".$creditAppData["last_name"];
+            $payload["gender"] = SmartList::getFieldDescription($mvData["gender"]);
+            $payload["dateOfBirth"] = $creditAppData["birth_date"];
+            $payload["bureauPermission"] = $mvData["term_of_use"];
+            $payload["declaredIncome"] = $creditAppData["monthly_income"];
+            $payload["educationLevel"] = SmartList::getFieldDescription($mvData["educational_level"]);
+            $payload["employmentType"] = SmartList::getFieldDescription($creditAppData["employment_status_code"]) == "Wrkr" ? "Salaried" : "Self Employed";
+            $payload["incomeMode"] = SmartList::getFieldDescription($mvData["salary_payment_mode"]);
+            $payload["preferNetBanking"] = $mvData["prefer_net_banking"] ? true : false;
+            $addressData = [];
+            $addressData["addressLine1"] = $creditAppData["address1"];
+            $addressData["addressLine2"] = $creditAppData["address2"];
+            $addressData["city"] = $creditAppData["city"];
+            $addressData["state"] = $creditAppData["state"];
+            $addressData["pincode"] = $creditAppData["postal_code"];
+            $addressData["addressType"] = "current";
+            $addressData["residenceType"] = SmartList::getFieldDescription($mvData["residency_type"]);
+            $payload["addressList"] = [$addressData];
+            $payload["emailList"] = [array(
+                "email" => $creditAppData["email"],
+                "type" => "primary_device"
+            )];
+            $headersArray = array(
+                "token: $token",
+                "Content-Type: application/json"
+            );
+            $upwardAppModel = new UpwardsAppModel();
+            $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
+            if($response['status'] == "success"){
+                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                return $response["leadId"] ?? 0;
+            }else if($response['status'] == "failure"){
+                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                return $response["leadId"] ?? 0;
+            } else {
+                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$appId);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+    }
+
+    public function getJourneyUrl($lenderSystemId){
+        try{
+            $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
+            $journey = "v1/journey-url/".$lenderSystemId;
+            $url = $moneyViewBaseUrl.$journey;
+            $token = $this->getMoneyviewAccessToken();
+            $headersArray = array(
+                "token: $token",
+                "Content-Type: application/json"
+            );
+            $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
+            if(!empty($response)){
+                if($response['status'] == "success"){
+                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                    return $response["pwa"] ?? "";
+                }else if($response['status'] == "failure"){
+                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                    return "";
+                }
+                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }else{
+                $message = "MoneyView: Unable to get Journey Url for given :".$lenderSystemId;
+                ErrorLogModel::LogError($status = 400, 400, $message);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+    }
+
+    public function getMvStatus($lenderSystemId){
+        try{
+            $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
+            $journey = "v1/lead/status/".$lenderSystemId;
+            $url = $moneyViewBaseUrl.$journey;
+            $token = $this->getMoneyviewAccessToken();
+            $headersArray = array(
+                "token: $token",
+                "Content-Type: application/json"
+            );
+            $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
+            if(!empty($response)){
+                if($response["status"] == "success"){
+                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                    $lapStatus = OfferStatusModel::getLapStatus("MoneyView",$response["leadStatus"]);
+                    return $lapStatus ?? "";
+                }else if($response["status"] == "failure"){
+                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                    return $response["leadStatus"] ?? "";
+                }
+                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }else{
+                $message = "MoneyView: Unable to get mv status for given :".$lenderSystemId;
+                ErrorLogModel::LogError($status = 400, 400, $message,$lenderSystemId);
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
+            }
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message,$lenderSystemId);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+    }
+
+    /**
+     * Method is designed for GET Curl call. There is an issue with post Curl Call. So, created a new GET method.
+     * common CURL function to call lenders APIs.
+     */
+    public function curlCommonFunctionGetMethod($url,$headersArray){     
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $url,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'GET',
+          CURLOPT_HTTPHEADER => $headersArray,
+        ));
+        
+        $json_response = curl_exec($curl);
+        $response = json_decode($json_response, true);
+        curl_close($curl);  
+        return $response;
+    }
 }
