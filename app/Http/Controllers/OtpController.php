@@ -87,12 +87,14 @@ class OtpController extends Controller
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -215,12 +217,14 @@ class OtpController extends Controller
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -311,12 +315,14 @@ class OtpController extends Controller
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             } catch (Exception $e) {
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             }
         } else {
             try {
@@ -350,12 +356,14 @@ class OtpController extends Controller
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             } catch (Exception $e) {
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             }
         }
     }

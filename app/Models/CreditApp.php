@@ -85,12 +85,14 @@ class CreditApp extends Model
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             } catch (Exception $e) {
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             }
         } else {
             try {
@@ -149,12 +151,14 @@ class CreditApp extends Model
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             } catch (Exception $e) {
                 $code = $e->getCode();
                 $message = $e->getMessage();
                 ErrorLogModel::LogError($status = 500, $code, $message);
-                echo ErrorLogModel::genericMessage();
+                $errolog = new ErrorLogModel();
+                return $errolog->genericMsg();
             }
         }
     }
@@ -192,12 +196,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $creditInflightAppId);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) { 
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $creditInflightAppId);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -268,12 +274,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -310,7 +318,8 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($code, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -351,12 +360,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -383,12 +394,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -444,12 +457,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -470,12 +485,14 @@ class CreditApp extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 }

@@ -104,6 +104,7 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = "CASHe";
 			}
 		}		
+	
 		if(empty($new_arr))
 		{
 			return [];
@@ -142,17 +143,20 @@ class FormulaBuilderEngineController extends Controller
 						}	
 				}
 			}
-			
+	
 			$statusOnOff = ExternalConnectorsModel::externalConnects('CHECKCASHEOFFERS');
 			if($statusOnOff == 1){
 				$casheAppModel = new CasheAppModel();
 				$casheOfferArray = $casheAppModel->casheOffers($mobilePhoneNumber,$birthDate,$monthlyIncome);
 				if(!empty($casheOfferArray)){
 					$lendersMainArray['CASHe'][] = "CASHe";
+					$new_arr[] = "CASHe";
+					$lender_name[] = "CASHe";
 				}
 			}
-			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
 			
+			$new_arr = $this->checkIfUserConsumedOffer($creditAppUUID, $new_arr,$lender_name,$lendersMainArray);
+		
 		}
 	
 		//DB::connection()->enableQueryLog();
@@ -457,7 +461,7 @@ class FormulaBuilderEngineController extends Controller
 			}
 
 		}
-
+	
 		if(in_array('CASHe',$lender_name))
 		{
 			$casheData =DB::table('cashe_app')
@@ -468,13 +472,13 @@ class FormulaBuilderEngineController extends Controller
 			if(!empty($casheData))
 			{	
 				foreach ($lendersMainArray['CASHe'] as $key1 => $value) {
-					if (($key = array_search($arr, $value)) !== false) {
+					if (($key = array_search($value, $arr)) !== false) {
 						unset($arr[$key]);
 					}
 				}
 			}
 		}
-		
+	
 		return $arr;
 		
 

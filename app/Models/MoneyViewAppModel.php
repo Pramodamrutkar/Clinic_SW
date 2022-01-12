@@ -54,12 +54,12 @@ class MoneyViewAppModel extends Model
             $lenderSystemId = $this->mvCreateLead($app_id,$moneyViewUpdateData);
             $moneyViewUpdateData->lender_system_id = $lenderSystemId;
             $moneyViewUpdateData->journey_url = $this->getJourneyUrl($lenderSystemId);
-            dd($moneyViewUpdateData);
+          
             if($moneyViewUpdateData->save()){
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
-                    'moneyview_uid' => $moneyViewUpdateData->moneyview_uid
+                    'mvIframeUrl' => $moneyViewUpdateData->journey_url
                 ],200);
             }else{
                 return Response([
@@ -127,7 +127,8 @@ class MoneyViewAppModel extends Model
             if(!empty($moneyViewUpdateData)){
                 $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
                 if(!empty($mvLenderSystemId)){
-                    $moneyViewUpdateData->mis_status = $this->getMvStatus($mvLenderSystemId);
+                    $status = $this->getMvStatus($mvLenderSystemId);
+                    $moneyViewUpdateData->mis_status = $status ?? "Initiated";
                     $moneyViewUpdateData->save();
                 }
             }
@@ -267,13 +268,13 @@ class MoneyViewAppModel extends Model
             $upwardAppModel = new UpwardsAppModel();
             $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
             if($response['status'] == "success"){
-                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"]."=>".$response["leadId"],$appId);
                 return $response["leadId"] ?? 0;
             }else if($response['status'] == "failure"){
-                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$response["leadId"],$appId);
                 return $response["leadId"] ?? 0;
             } else {
-                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$appId);
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"],$appId);
                 $errolog = new ErrorLogModel();
                 return $errolog->genericMsg();
             }
@@ -299,13 +300,13 @@ class MoneyViewAppModel extends Model
             $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
             if(!empty($response)){
                 if($response['status'] == "success"){
-                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"]);
                     return $response["pwa"] ?? "";
                 }else if($response['status'] == "failure"){
-                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                    ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]);
                     return "";
                 }
-                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"]);
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]);
                 $errolog = new ErrorLogModel();
                 return $errolog->genericMsg();
             }else{
@@ -334,16 +335,19 @@ class MoneyViewAppModel extends Model
                 "Content-Type: application/json"
             );
             $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
+           
             if(!empty($response)){
                 if($response["status"] == "success"){
-                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"],$lenderSystemId);
                     $lapStatus = OfferStatusModel::getLapStatus("MoneyView",$response["leadStatus"]);
                     return $lapStatus ?? "";
                 }else if($response["status"] == "failure"){
-                    ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                    $message = "MoneyView: Failure Unable to get mv status";
+                    ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$message,$lenderSystemId);
                     return $response["leadStatus"] ?? "";
                 }
-                ErrorLogModel::LogError($response['status'], $response['code'], "MoneyView: ".$response["message"],$lenderSystemId);
+                $message = "MoneyView: Error Unable to get mv status";
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$message,$lenderSystemId);
                 $errolog = new ErrorLogModel();
                 return $errolog->genericMsg();
             }else{

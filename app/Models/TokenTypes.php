@@ -40,12 +40,14 @@ class TokenTypes extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) { 
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 }

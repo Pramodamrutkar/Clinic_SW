@@ -26,7 +26,8 @@ class ConfigEmailsModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } 
     }
 }

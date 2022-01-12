@@ -82,7 +82,8 @@ class CasheAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
@@ -120,7 +121,8 @@ class CasheAppModel extends Model
             $code = $e->getCode();
             $message = "CASHe".$e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$cachePartnerName);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
         
     }
@@ -195,12 +197,14 @@ class CasheAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }    
     }
 
@@ -235,7 +239,8 @@ class CasheAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
     
@@ -294,12 +299,14 @@ class CasheAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
         }
     }
 
