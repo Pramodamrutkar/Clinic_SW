@@ -23,7 +23,6 @@ class MisDataReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSiz
       
         foreach ($misDataReportArray as $key => $value) {
             $headingsData[] = array(
-                "MerchantTrackingId" => $value["MerchantTrackingId"] ?? 0,
                 "Date" => $value["CurrentDate"] ?? "",
                 "How many unique users landed on the first screen" => $value["UniqueUsers"] ?? 0,
                 "How many users proceeded to submit their mobile and email (Completion of screen 1)" => $value["UsersMobileEmail"] ?? 0,
@@ -60,7 +59,6 @@ class MisDataReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSiz
     public function headings(): array
     {
         return [
-            'Merchant Tracking ID',
             'Date',
             'Unique Users (Screen 1)',
             'Users Login Mobile and Email (Completion of screen 1)',
