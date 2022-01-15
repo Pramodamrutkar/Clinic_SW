@@ -19,8 +19,23 @@
             Hi {{ $firstName }},<br/><br/>Thank you for selecting CASHe!<br/>
             <p>
             <div>To continue your loan application you must download CASHe’s mobile app. </div>
-            <div> You can download now from:</div>
-            <p style='display: flex; align-items:center;'><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' width='170' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' /></a><a href='{{ $casheDownloadUrl }}' ><img alt='Get it on Google Play' height='44' style='padding: 9px 0;' width='170' src='https://1000logos.net/wp-content/uploads/2020/08/apple-app-store-logo.jpg' /></a></p>
+            <div>Don't wait, click on the button below to install the CASHe App now</div>
+            <div><p style='display: flex; align-items:center;'><a href='{{ $casheDownloadUrl }}' style="text-decoration: none;
+    display: inline-block;
+    color: #ffffff;
+    background-color: #14689d;
+    border-radius: 4px;
+    width: auto;
+    width: auto;
+    font-size: 16px;
+    padding: 9px 20px;
+    border-top: 1px solid #14689d;
+    border-right: 1px solid #14689d;
+    border-bottom: 1px solid #14689d;
+    border-left: 1px solid #14689d;
+    font-family: Arial,Helvetica Neue,Helvetica,sans-serif;
+    text-align: center;
+    word-break: keep-all;">Install Now!</a></p></div>
             </p><br />
             <p>
             <div>CreditLinks Team </div>

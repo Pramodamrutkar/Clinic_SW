@@ -335,9 +335,9 @@ class CreditApp extends Model
                 ->where('credit_app.tin', $tin)
                 ->where('credit_app.creditprospect_uuid', $creditProspectId)
                 ->first();
-            if(empty($birthdate) && empty($tin)){
-                return true;
-            }
+            // if(empty($birthdate) && empty($tin)){
+            //     return true;
+            // }
             if (empty($creditProspectData)) {
                 return response([
                     'success' => 'false',

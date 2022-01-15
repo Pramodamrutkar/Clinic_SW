@@ -51,11 +51,13 @@ class OtpController extends Controller
                 $subject = "Your CreditLinks One-Time Password";
                 $flag = $this->sendEmail($messagePage, $emailId, $subject, $otp);
             }
-            //if (is_numeric($mobileNo)) {
-            $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->orWhere('email', $emailId)->first();
-            //} else {
-            //  $creditProspectdata = CreditProspect::where('email', $emailId)->first();
-            //}
+           
+            if(!empty($mobileNo)){
+                $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->first();
+            }else if(!empty($emailId)){
+                $creditProspectdata = CreditProspect::where('email', $emailId)->first();
+            }
+            
             $expireTime = config('constants.otpexpire');
             
             $otpInsert = new Otp();
@@ -297,6 +299,10 @@ class OtpController extends Controller
                 $creditProspectUpdate->role_id = 1;
                 $creditProspectUpdate->is_consent_accept = $request['is_consent_accept'];
                 $creditProspectUpdate->is_remind_me_later = $request['is_remind_me_later'];
+                $creditProspectUpdate->merchant_tracking_id = empty($request->url_segment) ? "" : $request->url_segment;
+                $creditProspectUpdate->merchant_name = empty($merchantData->name) ? "" : $merchantData->name;
+                $creditProspectUpdate->merchant_location_id = empty($merchantData->merchant_location_uid) ? "" : $merchantData->merchant_location_uid;
+                $creditProspectUpdate->updated_at = date("Y-m-d H:i:s");
                 if ($creditProspectUpdate->save()) {
                     // return $creditProspectUpdate->credituid;
                     return response([

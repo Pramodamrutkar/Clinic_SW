@@ -53,7 +53,8 @@ class MoneyViewAppModel extends Model
         
             $lenderSystemId = $this->mvCreateLead($app_id,$moneyViewUpdateData);
             $moneyViewUpdateData->lender_system_id = $lenderSystemId;
-            $moneyViewUpdateData->journey_url = $this->getJourneyUrl($lenderSystemId);
+            $journeyUrl = $this->getJourneyUrl($lenderSystemId);
+            $moneyViewUpdateData->journey_url = $journeyUrl;
           
             if($moneyViewUpdateData->save()){
                 return Response([
@@ -300,13 +301,13 @@ class MoneyViewAppModel extends Model
             $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
             if(!empty($response)){
                 if($response['status'] == "success"){
-                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"]);
+                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"]."=>".$lenderSystemId,);
                     return $response["pwa"] ?? "";
                 }else if($response['status'] == "failure"){
-                    ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]);
+                    ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$lenderSystemId);
                     return "";
                 }
-                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]);
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$lenderSystemId);
                 $errolog = new ErrorLogModel();
                 return $errolog->genericMsg();
             }else{
