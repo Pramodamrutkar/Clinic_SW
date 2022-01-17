@@ -274,7 +274,7 @@ class FormulaBuilderEngineController extends Controller
 					$push_data += array('total_ranking_offer' => $data_test[4]);
 					$push_data += array('offer_month' => $data_test[5]);
 					$push_data += array('offer_tenure' => $data_test[6]);
-					$push_data += array('offer_roi' => $data_test[7]);
+					$push_data += array('offer_roi' => round(($data_test[7]/12),2));
 					$push_data += array('offer_pf' => $data_test[8]);
 					
 					array_push($main_array,$push_data);
@@ -404,9 +404,8 @@ class FormulaBuilderEngineController extends Controller
 					}
 				}
 				
-			
 				$this->updateKnockoutLender($creditAppUUID, $lender_name); 
-			
+		
 		return $getData;
     }
 	
