@@ -43,8 +43,15 @@ class FormulaBuilderEngineController extends Controller
 		$age  = $from->diff($to)->y;
 		
 	
-        $locationData = Locations::where('postal_code', $postalCode )->first();
-		
+        $locationData = Locations::where('postal_code', $postalCode)->first();
+	
+	
+		if(empty($locationData)){
+			$cityTier = 100;
+			ErrorLogModel::LogError($status = "failure",400,"Pincode not serviceable".$postalCode, $creditAppUUID);
+		}else{
+			$cityTier = $locationData->city_tier;
+		}
 		
 		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');		
 
@@ -62,7 +69,7 @@ class FormulaBuilderEngineController extends Controller
 		$offerName1 = DB::table('formula_builder_engine')
 					->select('offer_name','lender_name')
 					->whereIn('offer_name',$new_arr_1)
-					->where(['offer_key'=>'City_Tier','offer_number'=> $locationData->city_tier, 'status'=>'1'])					
+					->where(['offer_key'=>'City_Tier','offer_number'=> $cityTier, 'status'=>'1'])					
 					->get();
 					
 		foreach($offerName1 as $v2)
