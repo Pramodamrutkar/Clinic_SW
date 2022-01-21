@@ -26,6 +26,12 @@ class CasheAppModel extends Model
         //     ],400);
         // }
         $responseduplicateStatus = $this->checkDuplicateOfferLead($mobile_phone_number, $birth_date);
+        if(empty($responseduplicateStatus) || $responseduplicateStatus == null){
+            $code = 4004;
+            $message = "CASHe: No response from CASHe";
+            ErrorLogModel::LogError($status = 200, $code, $message,$mobile_phone_number);
+            return false;
+        }
          if($responseduplicateStatus["statusCode"] == 200){
              //not duplicate
              if($responseduplicateStatus["duplicateStatusCode"] == 1){

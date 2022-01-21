@@ -54,7 +54,7 @@ class MoneyViewAppModel extends Model
             $lenderSystemId = $this->mvCreateLead($app_id,$moneyViewUpdateData);
             $moneyViewUpdateData->lender_system_id = $lenderSystemId;
             $journeyUrl = $this->getJourneyUrl($lenderSystemId);
-            $moneyViewUpdateData->journey_url = $journeyUrl;
+            $moneyViewUpdateData->journey_url = $journeyUrl ?? "";
           
             if($moneyViewUpdateData->save()){
                 return Response([
@@ -309,12 +309,14 @@ class MoneyViewAppModel extends Model
                 }
                 ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$lenderSystemId);
                 $errolog = new ErrorLogModel();
-                return $errolog->genericMsg();
+                //return $errolog->genericMsg();
+                return "";
             }else{
                 $message = "MoneyView: Unable to get Journey Url for given :".$lenderSystemId;
                 ErrorLogModel::LogError($status = 400, 400, $message);
                 $errolog = new ErrorLogModel();
-                return $errolog->genericMsg();
+                //return $errolog->genericMsg();
+                return "";
             }
         } catch (Exception $e) {
             $code = $e->getCode();
@@ -349,13 +351,13 @@ class MoneyViewAppModel extends Model
                 }
                 $message = "MoneyView: Error Unable to get mv status";
                 ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$message,$lenderSystemId);
-                $errolog = new ErrorLogModel();
-                return $errolog->genericMsg();
+                $lapStatus = OfferStatusModel::getLapStatus("MoneyView",$response["leadStatus"]);
+                return $lapStatus ?? $response['status'];
             }else{
                 $message = "MoneyView: Unable to get mv status for given :".$lenderSystemId;
                 ErrorLogModel::LogError($status = 400, 400, $message,$lenderSystemId);
-                $errolog = new ErrorLogModel();
-                return $errolog->genericMsg();
+                $lapStatus = OfferStatusModel::getLapStatus("MoneyView",$response["leadStatus"]);
+                return $lapStatus ?? $response['status'];
             }
         } catch (Exception $e) {
             $code = $e->getCode();

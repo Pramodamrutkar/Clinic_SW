@@ -282,8 +282,12 @@ class OtpController extends Controller
 
     public function storeBasicDetails(Request $request)
     {
-
-        $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+        if(!empty($request->mobile_phone_number) && empty($request->email)){
+            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orderBy('created_at', 'desc')->first();
+        }else if(!empty($request->mobile_phone_number) && !empty($request->email)){
+            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
+        }
+        // $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
 
         $merchantData = DB::table('merchant')
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
@@ -292,13 +296,13 @@ class OtpController extends Controller
 
         if (!empty($creditProspectUpdate)) {
             try {
-                $creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
-                $creditProspectUpdate->email = $request['email'];
-                $creditProspectUpdate->mobile_phone_code = $request['mobile_phone_code'];
-                $creditProspectUpdate->mobile_phone_number = $request['mobile_phone_number'];
-                $creditProspectUpdate->role_id = 1;
-                $creditProspectUpdate->is_consent_accept = $request['is_consent_accept'];
-                $creditProspectUpdate->is_remind_me_later = $request['is_remind_me_later'];
+                //$creditProspectUpdate->credituid = $creditProspectUpdate->credituid;
+                //$creditProspectUpdate->email = $request['email'];
+                //$creditProspectUpdate->mobile_phone_code = $request['mobile_phone_code'];
+                //$creditProspectUpdate->mobile_phone_number = $request['mobile_phone_number'];
+                //$creditProspectUpdate->role_id = 1;
+                //$creditProspectUpdate->is_consent_accept = $request['is_consent_accept'];
+                //$creditProspectUpdate->is_remind_me_later = $request['is_remind_me_later'];
                 $creditProspectUpdate->merchant_tracking_id = empty($request->url_segment) ? "" : $request->url_segment;
                 $creditProspectUpdate->merchant_name = empty($merchantData->name) ? "" : $merchantData->name;
                 $creditProspectUpdate->merchant_location_id = empty($merchantData->merchant_location_uid) ? "" : $merchantData->merchant_location_uid;
