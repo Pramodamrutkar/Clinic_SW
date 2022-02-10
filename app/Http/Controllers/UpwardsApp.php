@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 
 class UpwardsApp extends Controller
 {
-    
+
     /**
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
@@ -19,7 +19,7 @@ class UpwardsApp extends Controller
         return $response;
     }
 
-       //upward testing 
+       //upward testing
    //  public function checkUpwardStatus(Request $request){
    //      $upwardsAppModel = new UpwardsAppModel();
    //      $response = $upwardsAppModel->getUpwardStatus($request);
@@ -35,12 +35,12 @@ class UpwardsApp extends Controller
      public function initiateLoan(Request $request){
         $upwardsApp = new UpwardsAppModel();
         $response = $upwardsApp->initiateLoanApplication($request);
-        return $response; 
+        return $response;
      }
 
-     public function showOffers($id){
+     public function showOffers(Request $request,$id){
          $upwardsoffers = new UpwardsAppModel();
-         $response = $upwardsoffers->getUpwardsOthersOffer($id);
+         $response = $upwardsoffers->getUpwardsOthersOffer($request,$id);
          return $response;
      }
 }

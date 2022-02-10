@@ -17,7 +17,7 @@ class ErrorLogModel extends Model
         $errorLogModel = new static;
         $errorLogModel->status = trim($status);
         $errorLogModel->code = trim($code);
-        $errorLogModel->details = trim($details);
+        $errorLogModel->details = $details;
         $errorLogModel->created_by = trim($created_by);
         $errorLogModel->save();
     }
@@ -26,7 +26,7 @@ class ErrorLogModel extends Model
         $arr = array(
             'success' => 'false',
             'message' => 'Unfortunately, we are not able to proceed with your request. Please try again.'
-         ); 
+         );
         return json_encode($arr);
     }
 

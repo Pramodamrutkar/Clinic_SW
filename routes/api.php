@@ -10,6 +10,7 @@ use App\Http\Controllers\FormulaBuilderEngineController;
 use App\Http\Controllers\PersonalAccessTokenController;
 use App\Http\Controllers\InternalReportExportController;
 use App\Http\Controllers\Merchant;
+use App\Http\Controllers\SendReminderTostartBgServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,7 @@ Route::post('/verifyotp', [OtpController::class, 'authenticate']);
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
 Route::get('/search-list/{lang}', [SmartListController::class, 'searchList']);
 Route::post('/verify-tindob', [CreditProspectController::class, 'verifyViaTin']);
+
 Route::post('/lap/authenticate',[PersonalAccessTokenController::class,'lapAuthenticate']);
 
 //update data from sf & show data to sf.
@@ -45,6 +47,9 @@ Route::get('/process/offers/{id}',[UpwardsApp::class,'showOffers']);
 Route::get('/generate-merchant-qr/{num}', [Merchant::class, 'saveMerchantData']);
 Route::get('/data-sp', [InternalReportExportController::class,'export']);
 
+Route::get('/comm-details', [SendReminderTostartBgServiceController::class,'commDetails']);
+Route::get('/{sf}/offers-details/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
+
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [OtpController::class, 'logout']);
     Route::post('save-creditapp', [CreditProspectController::class, 'storePersonalInfoInCreditApp']);
@@ -57,7 +62,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //using creditapp_uid id user/{app_id}
     Route::post('/return-user/{app_id}',[CreditProspectController::class, 'returnUserProfile']);
     Route::get('/offer-screen/{app_id}',[MoneyViewApp::class, 'showOfferChart']);
-    Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);   
+    Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
     Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheDownloadUrl']);
 });

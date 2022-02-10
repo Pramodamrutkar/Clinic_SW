@@ -32,7 +32,7 @@ class MoneyViewAppModel extends Model
             }
 
             $moneyViewUpdateData = MoneyViewAppModel::where('creditapp_uid',$app_id)->first();
-        
+
             if(empty($moneyViewUpdateData)){
                 return Response([
                     'status' => 'fail',
@@ -50,13 +50,16 @@ class MoneyViewAppModel extends Model
             $moneyViewUpdateData->emi = $request['emi'];
             $moneyViewUpdateData->merchant_tracking_id = $request['merchant_tracking_id'];
             $moneyViewUpdateData->lender_created = $request['lender_created'] ?? date("Y-m-d");
-        
+
             $lenderSystemId = $this->mvCreateLead($app_id,$moneyViewUpdateData);
             $moneyViewUpdateData->lender_system_id = $lenderSystemId;
             $journeyUrl = $this->getJourneyUrl($lenderSystemId);
             $moneyViewUpdateData->journey_url = $journeyUrl ?? "";
-          
+
             if($moneyViewUpdateData->save()){
+				$moneyViewSFDC = $this->buildArrayForMoneyViewToSFDC($moneyViewUpdateData);
+                $casheAppModelObj = new CasheAppModel();
+				$casheAppModelObj->storeAdditionalDataInSFDC($moneyViewSFDC);
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
@@ -93,7 +96,7 @@ class MoneyViewAppModel extends Model
             }
             $upwardlenderSystemId = '';
             $UpwardsAppModel = UpwardsAppModel::select('*')->where('creditapp_uid',$app_id)->first();
-    
+
             if(!empty($UpwardsAppModel)){
                 $upwardlenderSystemId = $UpwardsAppModel['lender_system_id'];
                 $lenderCustomerId = $UpwardsAppModel['lender_customer_id'];
@@ -110,7 +113,7 @@ class MoneyViewAppModel extends Model
             if($statusOnOff == 1){
                 $cashelenderSystemId = 0;
                 $casheAppModel = CasheAppModel::select('*')->where('creditapp_uid',$app_id)->first();
-                
+
                 if(!empty($casheAppModel)){
                     $cashelenderSystemId = $casheAppModel['lender_system_id'];
                     $casheApp = new CasheAppModel();
@@ -120,10 +123,10 @@ class MoneyViewAppModel extends Model
                         $casheAppModel->mis_status = $responseCasheStatus;
                         $casheAppModel->save();
                     }
-                    
+
                 }
             }
-            
+
             $moneyViewUpdateData = MoneyViewAppModel::select('*')->where('creditapp_uid',$app_id)->first();
             if(!empty($moneyViewUpdateData)){
                 $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
@@ -144,7 +147,7 @@ class MoneyViewAppModel extends Model
             $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status','upwards_app.Iframe_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
-        
+
             $offerData = array();
             if(!empty($upwardsApp)){
                 $offerData[] = $upwardsApp;
@@ -155,7 +158,7 @@ class MoneyViewAppModel extends Model
             if(!empty($casheApp)){
                 $offerData[] = $casheApp;
             }
-            
+
             if(!empty($offerData)){
                 return Response([
                     'status' => 'true',
@@ -188,7 +191,7 @@ class MoneyViewAppModel extends Model
             $moneyviewUserName = config('constants.moneyviewUserName');
             $moneyviewPassword = config('constants.moneyviewPassword');
             $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
-            
+
             $tokenUrl = "v1/token";
             $url = $moneyViewBaseUrl.$tokenUrl;
 
@@ -202,7 +205,7 @@ class MoneyViewAppModel extends Model
             $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
             if(!empty($response)){
                 if($response["status"] == "success"){
-                    return $response["token"];    
+                    return $response["token"];
                 }
             }else{
                 $message = "Unable to get access token for Moneyview service";
@@ -224,13 +227,13 @@ class MoneyViewAppModel extends Model
             return $errolog->genericMsg();
         }
     }
-    
+
     public function mvCreateLead($appId,$mvData){
         try{
             $creditAppData = CreditApp::where("creditapp_uuid",$appId)->first();
             $moneyviewPartnerCode = config('constants.moneyviewPartnerCode');
             $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
-            
+
             $createLead = "v1/lead";
             $url = $moneyViewBaseUrl.$createLead;
 
@@ -275,9 +278,8 @@ class MoneyViewAppModel extends Model
                 ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"]."=>".$response["leadId"],$appId);
                 return $response["leadId"] ?? 0;
             } else {
-                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$response["message"],$appId);
-                $errolog = new ErrorLogModel();
-                return $errolog->genericMsg();
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView Erro: ".$response["message"],$appId);
+                return "";
             }
         } catch (Exception $e) {
             $code = $e->getCode();
@@ -338,7 +340,7 @@ class MoneyViewAppModel extends Model
                 "Content-Type: application/json"
             );
             $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
-           
+
             if(!empty($response)){
                 if($response["status"] == "success"){
                     ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"],$lenderSystemId);
@@ -372,7 +374,7 @@ class MoneyViewAppModel extends Model
      * Method is designed for GET Curl call. There is an issue with post Curl Call. So, created a new GET method.
      * common CURL function to call lenders APIs.
      */
-    public function curlCommonFunctionGetMethod($url,$headersArray){     
+    public function curlCommonFunctionGetMethod($url,$headersArray){
         $curl = curl_init();
         curl_setopt_array($curl, array(
           CURLOPT_URL => $url,
@@ -385,10 +387,74 @@ class MoneyViewAppModel extends Model
           CURLOPT_CUSTOMREQUEST => 'GET',
           CURLOPT_HTTPHEADER => $headersArray,
         ));
-        
+
         $json_response = curl_exec($curl);
         $response = json_decode($json_response, true);
-        curl_close($curl);  
+        curl_close($curl);
         return $response;
     }
+
+    public function checkMoneyviewEligibility($panId,$app_id=""){
+        try{
+            $moneyViewBaseUrl = config('constants.moneyviewApiBaseUrl');
+            $filter = "v1/lead/filter/pan/".$panId;
+            $url = $moneyViewBaseUrl.$filter;
+            $token = $this->getMoneyviewAccessToken();
+            $headersArray = array(
+                "token: $token",
+                "Content-Type: application/json"
+            );
+            $response = $this->curlCommonFunctionGetMethod($url, $headersArray);
+
+            if(!empty($response)){
+                if($response["status"] == "success"){
+                    if($response["panValidationStatus"] == "valid"){
+                        ErrorLogModel::LogError($response['status'], 200, "MoneyView Eligibility: valid panValidationStatus = ".$panId,$app_id);
+                        return true;
+                    }else{
+                        ErrorLogModel::LogError($response['status'], 400, "MoneyView Eligibility: Invalid panValidationStatus = ".$panId,$app_id);
+                        return 0;
+                    }
+                }
+                $message = "MoneyView: Error Unable to get eligibility";
+                ErrorLogModel::LogError($response['status'], 400, "MoneyView: ".$message,$app_id);
+                return 0;
+            }else{
+                $message = "MoneyView: Error Unable to get Eligibity given :".$app_id;
+                ErrorLogModel::LogError($status = 400, 400, $message,$app_id);
+                return 0;
+            }
+       } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($status = 500, $code, $message);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+    }
+
+	public function buildArrayForMoneyViewToSFDC($moneyViewUpdateData)
+	{
+        $moneyViewSFDC = array();
+		$moneyViewSFDC['Id'] = $moneyViewUpdateData->creditapp_uid;
+		$moneyViewSFDC['Gender'] = SmartList::getFieldDescription($moneyViewUpdateData->gender);
+		$moneyViewSFDC['LenderName'] = $moneyViewUpdateData->lender_name;
+		$moneyViewSFDC['TermsOfUse'] = ($moneyViewUpdateData->term_of_use == 1) ? true : false;
+		$moneyViewSFDC['EducationLevel'] = SmartList::getFieldDescription($moneyViewUpdateData->educational_level);
+		$moneyViewSFDC['SalaryPaymentMode'] = SmartList::getFieldDescription($moneyViewUpdateData->salary_payment_mode);
+		$moneyViewSFDC['PreferNetbanking'] = ($moneyViewUpdateData->prefer_net_banking == 1) ? true : false;
+		$moneyViewSFDC['ResidencyType'] = SmartList::getFieldDescription($moneyViewUpdateData->residency_type);
+		$moneyViewSFDC['Created'] = $moneyViewUpdateData->created_at;
+		$moneyViewSFDC['MisStatus'] = $moneyViewUpdateData->mis_status;
+		$moneyViewSFDC['Updated'] = $moneyViewUpdateData->updated_at;
+		$moneyViewSFDC['LenderSystemId'] = $moneyViewUpdateData->lender_system_id;
+		$moneyViewSFDC['MerchantLocationId'] = $moneyViewUpdateData->merchant_tracking_id;
+		$moneyViewSFDC['SelectedOffer']['EMI'] = $moneyViewUpdateData->emi;
+		$moneyViewSFDC['SelectedOffer']['Amount'] = $moneyViewUpdateData->amount;
+		$moneyViewSFDC['SelectedOffer']['TermsMonth'] = $moneyViewUpdateData->term_months;
+		$moneyViewSFDC['SelectedOffer']['Fees'] = $moneyViewUpdateData->processing_fees;
+		$moneyViewSFDC['SelectedOffer']['Created'] = $moneyViewUpdateData->created_at;
+		$moneyViewSFDC['SelectedOffer']['Rate'] = $moneyViewUpdateData->annual_interest_rate;
+		return $moneyViewSFDC;
+	}
 }

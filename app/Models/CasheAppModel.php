@@ -62,17 +62,17 @@ class CasheAppModel extends Model
         try{
             $cachePartnerName = config('constants.cachePartnerName');
             $cacheBaseUrl = config('constants.cacheApiBaseUrl');
-            $bDate =  date("d-m-Y", strtotime($birthdate));  
-            
+            $bDate =  date("d-m-Y", strtotime($birthdate));
+
             $payload = array(
                 'partner_name' => $cachePartnerName,
                 'last_five_digits_of_mobile' => substr($mobileno,5),
                 'date_of_birth' => $bDate
             );
-        
+
             $str = json_encode($payload);
             $passphrase = config('constants.passphrase');
-        
+
             $checkSum = $this->generateCheckSum($str,$passphrase);
 
             $appendTo = "checkDuplicateCustomerLead";
@@ -82,7 +82,7 @@ class CasheAppModel extends Model
                 "Content-Type: application/json"
             );
             $upwardModel = new UpwardsAppModel();
-            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray);
             return $response;
         } catch (Exception $e) {
             $code = $e->getCode();
@@ -103,12 +103,12 @@ class CasheAppModel extends Model
         try{
             $cachePartnerName = config('constants.cachePartnerName');
             $cacheBaseUrl = config('constants.cacheApiBaseUrl');
-            
+
             $payload = array(
                 'partner_name' => $cachePartnerName,
                 'salary' => $salary
             );
-        
+
             $str = json_encode($payload);
             $passphrase = config('constants.passphrase');
             $checkSum = $this->generateCheckSum($str,$passphrase);
@@ -121,7 +121,7 @@ class CasheAppModel extends Model
             );
 
             $upwardModel = new UpwardsAppModel();
-            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray);
             return $response;
         } catch (Exception $e) {
             $code = $e->getCode();
@@ -130,21 +130,21 @@ class CasheAppModel extends Model
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
         }
-        
+
     }
 
     public function processCasheOffers($offerResponse){
-     
+
         $paylodData = json_decode($offerResponse["payLoad"]);
-       
+
         $offers = array();
         foreach ($paylodData as $key => $value) {
             $offers[$key]['lender_name'] = "CASHe";
             $offers[$key]['LenderId'] = "twiyp8jcr-aimx-ivuw-736d-90ud1f8lp6";
-            $offers[$key]['LenderUrl'] = "https://www.cashe.co.in/"; 
+            $offers[$key]['LenderUrl'] = "https://www.cashe.co.in/";
             $offers[$key]['loanType'] = $value->loanType;
             $offers[$key]['offer_amount'] = $value->maxLoanEligibilityAmount;
-            $offers[$key]['minLoanEligibilityAmount'] = $value->minLoanEligibilityAmount; 
+            $offers[$key]['minLoanEligibilityAmount'] = $value->minLoanEligibilityAmount;
             $offers[$key]['offer_roi'] = number_format(floatval($value->interestRate), 2);
             $offers[$key]['offer_pf'] = number_format(floatval($value->processingFee), 2);
             $offers[$key]['offer_tenure'] = $value->noOfInstallments;
@@ -156,19 +156,19 @@ class CasheAppModel extends Model
     public function createUserWithCache($app_id){
         try{
             $creditAppData = CreditApp::where("creditapp_uuid",trim($app_id))->first();
-        
+
             if(empty($creditAppData)){
                 return Response([
                     'status' => 'false',
                     'message' => 'Invalid Application ID for CASHe'
                 ],400);
             }
-            
+
             $cachePartnerName = config('constants.cachePartnerName');
             $passphrase = config('constants.passphrase');
             $cacheBaseUrl = config('constants.cacheApiBaseUrl');
             $requestUrl = "create_customer";
-            
+
             $payload = array();
             $payload['partner_name'] = $cachePartnerName;
             $payload['Personal Information']['First Name'] = $creditAppData["first_name"];
@@ -185,11 +185,11 @@ class CasheAppModel extends Model
 
             $payload['Contact Information']['Mobile'] = $creditAppData["mobile_phone_number"];
             $payload['Contact Information']['Email Id'] = $creditAppData["email"];
-        
+
             $str = json_encode($payload);
-        
+
             $checkSum = $this->generateCheckSum($str,$passphrase);
-        
+
             $url = $cacheBaseUrl.$requestUrl;
             $headersArray = array(
                 "Check-Sum: $checkSum",
@@ -197,7 +197,7 @@ class CasheAppModel extends Model
             );
 
             $upwardModel = new UpwardsAppModel();
-            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray);
             return $response;
         } catch (QueryException $e) {
             $code = $e->getCode();
@@ -211,19 +211,19 @@ class CasheAppModel extends Model
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
-        }    
+        }
     }
 
     public function getCacheStatus($lender_system_id){
         try{
             $cachePartnerName = config('constants.cachePartnerName');
             $cacheBaseUrl = config('constants.cacheApiBaseUrl');
-            
+
             $payload = array(
                 'partner_name' => $cachePartnerName,
                 'partner_customer_id' => $lender_system_id
             );
-        
+
             $str = json_encode($payload);
             $passphrase = config('constants.passphrase');
             $checkSum = $this->generateCheckSum($str,$passphrase);
@@ -234,9 +234,9 @@ class CasheAppModel extends Model
                 "Check-Sum: $checkSum",
                 "Content-Type: application/json"
             );
-        
+
             $upwardModel = new UpwardsAppModel();
-            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray); 
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray);
             if($response["statusCode"] == 200){
                 $lapStatus = OfferStatusModel::getLapStatus("CASHe",$response["message"]);
                 return $lapStatus;
@@ -249,9 +249,9 @@ class CasheAppModel extends Model
             return $errolog->genericMsg();
         }
     }
-    
+
     public function getCasheRankWeightageOffer($offers){
-    
+
        $amountRanking = array_column($offers, "offer_amount");
        $roiRanking = array_column($offers, "offer_roi");
        $installmentRanking = array_column($offers, "offer_tenure");
@@ -292,12 +292,15 @@ class CasheAppModel extends Model
                 ],400);
             }
             $casheDownloadUrl = config('constants.cacheDownloadUrl');
-            $subject = "CASHe mobile app download information"; 
+            $subject = "CASHe mobile app download information";
             $firstName = $creditAppData["first_name"];
             $data = array("toEmail" => $email, "subject" => $subject, "firstName" => $firstName,"casheDownloadUrl" => $casheDownloadUrl);
             $messagePage = "cashetemplate";
             self::sendTemplateEmails($messagePage,$data);
-            return response([
+			$casheUpdateData = CasheAppModel::where("creditapp_uid",trim($app_id))->first();
+			$casheSFDC = $this->buildArrayForCasheToSFDC($casheUpdateData);
+			$this->storeAdditionalDataInSFDC($casheSFDC);
+            return Response([
                 'success' => 'true',
                 'message' => 'Download Link has been sent successfully'
             ],200);
@@ -315,5 +318,48 @@ class CasheAppModel extends Model
             return $errolog->genericMsg();
         }
     }
+
+	public function buildArrayForCasheToSFDC($casheUpdateData)
+	{
+		$casheSFDC['Id'] = strval($casheUpdateData->creditapp_uid);
+		$casheSFDC['LenderName'] = strval($casheUpdateData->lender_name);
+		$casheSFDC['LenderSystemId'] = strval($casheUpdateData->lender_system_id);
+		$casheSFDC['MerchantLocationId'] = strval($casheUpdateData->merchant_tracking_id);
+		$casheSFDC['SelectedOffer']['TermsMonth'] = $casheUpdateData->term_months;
+		$casheSFDC['SelectedOffer']['Created'] = strval($casheUpdateData->created_at);
+		$casheSFDC['SelectedOffer']['Amount'] = $casheUpdateData->amount;
+		$casheSFDC['SelectedOffer']['Rate'] = $casheUpdateData->annual_interest_rate;
+		$casheSFDC['SelectedOffer']['EMI'] = $casheUpdateData->emi;
+		$casheSFDC['SelectedOffer']['FeesInfo'] = strval($casheUpdateData->processing_fees);
+		$casheSFDC['SelectedOffer']['RateInfo'] = strval($casheUpdateData->annual_interest_rate);
+
+		return $casheSFDC;
+	}
+
+	public function storeAdditionalDataInSFDC($additionalData)
+	{
+		try {
+
+            $payload = $additionalData;
+
+            $credApp = new CreditApp();
+            $response = $credApp->getSFAccessToken();
+            $url = $response['instance_url']."/services/apexrest/additionalInfo";
+            $access_token = $response['access_token'];
+            $headersArray = array(
+                "Authorization: Bearer $access_token",
+                "Content-type: application/json"
+            );
+            $upwardModel = new UpwardsAppModel();
+            $response = $upwardModel->curlCommonFunction($url,$payload,$headersArray);
+            return $response;
+		} catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
+            ErrorLogModel::LogError($code, $code, $e);
+            $errolog = new ErrorLogModel();
+            return $errolog->genericMsg();
+        }
+	}
 
 }

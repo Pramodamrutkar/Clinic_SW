@@ -66,10 +66,10 @@ class CreditApp extends Model
                 $creditAppData->knockout_lenders = $request['knockout_lenders'];
                 $creditAppData->submission = $request['submission'];
                 if ($creditAppData->save()) {
-                    $statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
-                    if ($statusOnOff == 1) {
-                        $this->storeDataintoSFDC($creditAppData->creditapp_uuid);  //code to save data into salesforce
-                    }
+                    //$statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
+                    //if ($statusOnOff == 1) {
+                       // $this->storeDataintoSFDC($creditAppData->creditapp_uuid);  //code to save data into salesforce
+                    //}
                     return response([
                         'success' => 'true',
                         'message' => 'Record Updated Successfully!',
@@ -132,10 +132,10 @@ class CreditApp extends Model
                 $this->submission = $request['submission'];
 
                 if ($this->save()) {
-                    $statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
-                    if ($statusOnOff == 1) {
-                        $this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
-                    }
+                    //$statusOnOff = ExternalConnectorsModel::externalConnects('PHPTOSF');
+                    //if ($statusOnOff == 1) {
+                        //$this->storeDataintoSFDC($this->creditapp_uuid);  //code to save data into salesforce
+                    //}
                     return response([
                         'success' => 'true',
                         'message' => 'Added Record Successfully!',
@@ -198,7 +198,7 @@ class CreditApp extends Model
             ErrorLogModel::LogError($status = 500, $code, $message, $creditInflightAppId);
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
-        } catch (Exception $e) { 
+        } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message, $creditInflightAppId);
@@ -248,6 +248,7 @@ class CreditApp extends Model
             $creditData['CreditProspect']['MerchantName'] = $creditProspectData['merchant_name'];
 
             $content = json_encode($creditData);
+
             $response = $this->getSFAccessToken();
             $url = $response['instance_url'] . "/services/apexrest/application";
             $access_token = $response['access_token'];
@@ -419,42 +420,49 @@ class CreditApp extends Model
             $address2 = trim($request->Addr2);
             $mobileNumber = trim($request->MobilePhoneNumber);
             $monthlyIncome = trim($request->MonthlyIncome);
-            //$token = PersonalAccessToken::checkTokenExpire(trim($request->token),trim($request->tokenId));
+            $token = $request->header('token');
+            if(empty($token)) {
+                return response([
+                    'success' => 'false',
+                    'message' => 'No token found'
+                ], 400);
+            }
+            $tokenCnt = PersonalAccessToken::checkTokenExpire(trim($token),trim($request->tokenId));
 
-            //if($token = 1){
-            $creditdata = CreditApp::where("creditapp_uuid", $id)->first();
-            if (empty($creditdata)) {
-                return response([
-                    'success' => 'false',
-                    'message' => 'Invalid App ID'
-                ], 400);
+            if($tokenCnt == 1){
+                $creditdata = CreditApp::where("creditapp_uuid", $id)->first();
+                if (empty($creditdata)) {
+                    return response([
+                        'success' => 'false',
+                        'message' => 'Invalid App ID'
+                    ], 400);
+                }
+                $creditdata->first_name = $firstName;
+                $creditdata->last_name = $lastName;
+                $creditdata->birth_date = $birthDate;
+                $creditdata->postal_code = $postalcode;
+                $creditdata->address1 = $address1;
+                $creditdata->address2 = $address2;
+                $creditdata->monthly_income = $monthlyIncome;
+                $creditdata->email = $email;
+                $this->updateCreditProspectfromSF($creditdata);
+                if ($creditdata->save()) {
+                    return response([
+                        'success' => 'true',
+                        'message' => 'Record Has been Updated'
+                    ], 200);
+                } else {
+                    return response([
+                        'success' => 'false',
+                        'message' => 'Something went wrong'
+                    ], 400);
+                }
+            }else{
+                 return response([
+                     'success' => 'false',
+                     'message' => 'Invalid token or token_id'
+                 ], 400);
             }
-            $creditdata->first_name = $firstName;
-            $creditdata->last_name = $lastName;
-            $creditdata->birth_date = $birthDate;
-            $creditdata->postal_code = $postalcode;
-            $creditdata->address1 = $address1;
-            $creditdata->address2 = $address2;
-            $creditdata->monthly_income = $monthlyIncome;
-            $creditdata->email = $email;
-            $this->updateCreditProspectfromSF($creditdata);
-            if ($creditdata->save()) {
-                return response([
-                    'success' => 'true',
-                    'message' => 'Record Has been Updated'
-                ], 200);
-            } else {
-                return response([
-                    'success' => 'false',
-                    'message' => 'Something went wrong'
-                ], 400);
-            }
-            // }else{
-            //     return response([
-            //         'success' => 'false',
-            //         'message' => 'Invalid token or token_id'
-            //     ], 400);
-            // }
         } catch (QueryException $e) {
             $code = $e->getCode();
             $message = $e->getMessage();

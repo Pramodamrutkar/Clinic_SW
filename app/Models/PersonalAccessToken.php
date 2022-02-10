@@ -12,10 +12,10 @@ class PersonalAccessToken extends Model
     use HasFactory;
 
     protected $table = "personal_access_tokens";
-    
+
     protected $primaryKey = "id";
-    
-    public $timestamps = true; 
+
+    public $timestamps = true;
 
     public function generateToken($tokenId){
 

@@ -51,15 +51,15 @@ class OtpController extends Controller
                 $subject = "Your CreditLinks One-Time Password";
                 $flag = $this->sendEmail($messagePage, $emailId, $subject, $otp);
             }
-           
+
             if(!empty($mobileNo)){
                 $creditProspectdata = CreditProspect::where('mobile_phone_number', $mobileNo)->first();
             }else if(!empty($emailId)){
                 $creditProspectdata = CreditProspect::where('email', $emailId)->first();
             }
-            
+
             $expireTime = config('constants.otpexpire');
-            
+
             $otpInsert = new Otp();
             $otpInsert->code = $otp;
             $otpInsert->otpuid = (string) Str::uuid();
@@ -156,7 +156,7 @@ class OtpController extends Controller
 
     /**
      * @param \Illuminate\Http\Request $request
-     * 
+     *
      * otp login api
      */
     public function authenticate(Request $request)
@@ -177,6 +177,10 @@ class OtpController extends Controller
             $checkOtp = Otp::where('device_locator', $deviceLocator)->where('used', 0)->where('code', $otp)->where('expire_otp_time', '>=', $expiryTime)->get()->count();
 
             $creditProspectdata = CreditProspect::where('credituid', $creditProspectId)->first();
+
+            $creditProspectdata->is_remind_me_later = 0;
+            $creditProspectdata->updated_at = date("Y-m-d H:i:s");
+            $creditProspectdata->save();
             if (empty($creditProspectdata)) {
                 return response()->json([
                     'success' => false,
@@ -242,7 +246,7 @@ class OtpController extends Controller
         //     return response()->json(['error' => $validator->messages()], 200);
         // }
 
-        //Request is validated, do logout        
+        //Request is validated, do logout
         try {
             JWTAuth::invalidate($request->token);
 
@@ -282,12 +286,14 @@ class OtpController extends Controller
 
     public function storeBasicDetails(Request $request)
     {
-        if(!empty($request->mobile_phone_number) && empty($request->email)){
-            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orderBy('created_at', 'desc')->first();
-        }else if(!empty($request->mobile_phone_number) && !empty($request->email)){
-            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
-        }
-        // $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+        // if(!empty($request->mobile_phone_number) && empty($request->email)){
+        //     $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orderBy('created_at', 'desc')->first();
+        // }else if(!empty($request->mobile_phone_number) && !empty($request->email)){
+        //     $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
+        // }
+
+
+        $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
 
         $merchantData = DB::table('merchant')
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
@@ -311,7 +317,7 @@ class OtpController extends Controller
                     // return $creditProspectUpdate->credituid;
                     return response([
                         'success' => 'true',
-                        'message' => 'Added Record Successfully!',
+                        'message' => 'Updated Record Successfully!',
                         'app_id' => $creditProspectUpdate->credituid
 
                     ], 200);
@@ -348,7 +354,7 @@ class OtpController extends Controller
                 $obj->is_consent_accept = $request['is_consent_accept'];
                 $obj->is_remind_me_later = $request['is_remind_me_later'];
                 $obj->role_id = 1;
-          
+
                 if ($obj->save()) {
                     //return $obj->credituid;
                     return response([
