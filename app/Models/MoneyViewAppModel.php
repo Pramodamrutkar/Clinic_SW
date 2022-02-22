@@ -105,7 +105,11 @@ class MoneyViewAppModel extends Model
                 $upwardsApp = new UpwardsAppModel();
                 $upwardStatus = $upwardsApp->getUpwardStatus($upwardlenderSystemId,$lenderCustomerId);
                 //$upwardModel = UpwardsAppModel::where("creditapp_uid",$app_id)->first();
+                $offerExpireArray = array("Expired","Declined","Disbursed");
                 $UpwardsAppModel->mis_status = $upwardStatus ?? "";
+                if(in_array($upwardStatus,$offerExpireArray)){
+                    $UpwardsAppModel->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+                }
                 $UpwardsAppModel->save();
             }
 
@@ -118,9 +122,12 @@ class MoneyViewAppModel extends Model
                     $cashelenderSystemId = $casheAppModel['lender_system_id'];
                     $casheApp = new CasheAppModel();
                     $responseCasheStatus = $casheApp->getCacheStatus($cashelenderSystemId);
-
+                    $offerExpireArray = array("Error in request","Declined","Disbursed");
                     if(!empty($responseCasheStatus)){
                         $casheAppModel->mis_status = $responseCasheStatus;
+                        if(in_array($responseCasheStatus,$offerExpireArray)){
+                            $casheAppModel->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+                        }
                         $casheAppModel->save();
                     }
 
@@ -131,8 +138,12 @@ class MoneyViewAppModel extends Model
             if(!empty($moneyViewUpdateData)){
                 $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
                 if(!empty($mvLenderSystemId)){
+                    $offerExpireArray = array("Expired","Declined");
                     $status = $this->getMvStatus($mvLenderSystemId);
                     $moneyViewUpdateData->mis_status = $status ?? "Initiated";
+                    if(in_array($status,$offerExpireArray)){
+                        $moneyViewUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+                    }
                     $moneyViewUpdateData->save();
                 }
             }
@@ -343,7 +354,7 @@ class MoneyViewAppModel extends Model
 
             if(!empty($response)){
                 if($response["status"] == "success"){
-                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["message"],$lenderSystemId);
+                    ErrorLogModel::LogError($response['status'], 200, "MoneyView: ".$response["leadStatus"].$response["message"],$lenderSystemId);
                     $lapStatus = OfferStatusModel::getLapStatus("MoneyView",$response["leadStatus"]);
                     return $lapStatus ?? "";
                 }else if($response["status"] == "failure"){

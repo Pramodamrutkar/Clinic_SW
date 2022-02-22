@@ -490,38 +490,51 @@ class FormulaBuilderEngineController extends Controller
 	function checkIfUserConsumedOffer($creditAppUUID, $arrLender, $lender_name,$lendersMainArray)
 	{
 		$arr = $arrLender;
+        $currentTime = date('Y-m-d H:i:s');
 		if(in_array('Upwards',$lender_name))
 		{
 			$upwardData = DB::table('upwards_app')
 				->select('*')
 				->where('creditapp_uid',$creditAppUUID)
 				->get();
-			$upwardData = $upwardData->count();
-			if(!empty($upwardData))
+			$upwardDataCnt = $upwardData->count();
+			if(!empty($upwardDataCnt))
 			{
-				foreach ($lendersMainArray['Upwards'] as $key1 => $value) {
-					if (($key = array_search($value, $arr)) !== false) {
-						unset($arr[$key]);
-					}
-				}
+                for ($i=0; $i < count($upwardData); $i++) {
+                    if($upwardData[$i]->offer_expire_at == null || $upwardData[$i]->offer_expire_at >= $currentTime){
+                        foreach ($lendersMainArray['Upwards'] as $key1 => $value) {
+                            if (($key = array_search($value, $arr)) !== false) {
+                                unset($arr[$key]);
+                            }
+                        }
+                    }
+                }
 			}
 
 		}
 
 		if(in_array('MoneyView',$lender_name))
 		{
-			$moneyviewData =DB::table('moneyview_app')
+
+			$moneyviewData = DB::table('moneyview_app')
 			->select('*')
 			->where('creditapp_uid',$creditAppUUID)
+            //->where('offer_expire_at', '>=', $currentTime)
 			->get();
-			$moneyviewData = $moneyviewData->count();
-			if(!empty($moneyviewData))
+
+            $moneyviewDataCnt = $moneyviewData->count();
+
+            if(!empty($moneyviewDataCnt))
 			{
-				foreach ($lendersMainArray['MoneyView'] as $key1 => $value) {
-					if (($key = array_search($value, $arr)) !== false) {
-						unset($arr[$key]);
-					}
-				}
+                for ($i=0; $i < count($moneyviewData); $i++) {
+                    if($moneyviewData[$i]->offer_expire_at == null || $moneyviewData[$i]->offer_expire_at >= $currentTime){
+                        foreach ($lendersMainArray['MoneyView'] as $key1 => $value) {
+                            if (($key = array_search($value, $arr)) !== false) {
+                                unset($arr[$key]);
+                            }
+                        }
+                    }
+                }
 			}
 
 		}
@@ -532,15 +545,19 @@ class FormulaBuilderEngineController extends Controller
 			->select('*')
 			->where('creditapp_uid',$creditAppUUID)
 			->get();
-			$casheData = $casheData->count();
-			if(!empty($casheData))
+			$casheDataCnt = $casheData->count();
+			if(!empty($casheDataCnt))
 			{
-				foreach ($lendersMainArray['CASHe'] as $key1 => $value) {
-					if (($key = array_search($value, $arr)) !== false) {
-						unset($arr[$key]);
-					}
-				}
-			}
+                for ($i=0; $i < count($casheData); $i++) {
+                    if($casheData[$i]->offer_expire_at == null || $casheData[$i]->offer_expire_at >= $currentTime){
+                        foreach ($lendersMainArray['CASHe'] as $key1 => $value) {
+                            if (($key = array_search($value, $arr)) !== false) {
+                                unset($arr[$key]);
+                            }
+                        }
+                    }
+                }
+            }
 		}
 
 		return $arr;

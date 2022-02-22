@@ -166,7 +166,8 @@ class CreditApp extends Model
     public function saveCreditProspectData($request, $creditInflightAppId)
     {
         try {
-            $creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+            //$creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+            $creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
             if (empty($creditProspectData)) {
                 return response([
                     'success' => 'false',
@@ -339,7 +340,9 @@ class CreditApp extends Model
             // if(empty($birthdate) && empty($tin)){
             //     return true;
             // }
+            $string = "ProspectId=>".$creditProspectId." Birthdate=>".$birthdate." Pan=>".$tin;
             if (empty($creditProspectData)) {
+                ErrorLogModel::LogError($status = 400, 200, $string,$tin);
                 return response([
                     'success' => 'false',
                     'message' => 'Invalid PAN or Birthdate'

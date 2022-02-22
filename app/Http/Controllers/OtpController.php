@@ -286,14 +286,16 @@ class OtpController extends Controller
 
     public function storeBasicDetails(Request $request)
     {
-        // if(!empty($request->mobile_phone_number) && empty($request->email)){
-        //     $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orderBy('created_at', 'desc')->first();
-        // }else if(!empty($request->mobile_phone_number) && !empty($request->email)){
-        //     $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
-        // }
+        if(!empty($request->mobile_phone_number) && empty($request->email)){
+            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orderBy('created_at', 'desc')->first();
+            ErrorLogModel::LogError($status = 200, 200, "phone loggedin".$request->mobile_phone_number);
+        }else if(!empty($request->mobile_phone_number) && !empty($request->email)){
+            $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
+            ErrorLogModel::LogError($status = 200, 200, "Email and Phone loggedin".$request->mobile_phone_number."=".$request->email);
+        }
 
 
-        $creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
+        //$creditProspectUpdate = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
 
         $merchantData = DB::table('merchant')
             ->leftJoin('merchant_location', 'merchant.merchant_uid', '=', 'merchant_location.merchant_location_uid')
