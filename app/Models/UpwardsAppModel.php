@@ -413,6 +413,27 @@ class UpwardsAppModel extends Model
                         'message' => 'Something went wrong'
                     ],400);
                 }
+            }else if($request['lender_name'] == "MoneyTap"){
+                    $moneyTap = new MoneyTapModel();
+                    $moneyTap->creditapp_uid = trim($app_id);
+
+                    $moneyTap->amount = $request['amount'];
+                    $moneyTap->annual_interest_rate = $request['annual_interest_rate'];
+                    $moneyTap->term_months = $request['term_months'];
+                    $moneyTap->processing_fees = $request['processing_fees'];
+                    $moneyTap->mis_status = "Initiated";
+                    if($moneyTap->save()){
+                        return Response([
+                            'status' => 'true',
+                            'message' => 'saved data successfully!',
+                            'moneyview_uid' => $moneyTap->moneytap_id
+                        ],200);
+                    }else{
+                        return Response([
+                            'status' => 'false',
+                            'message' => 'Something went wrong'
+                        ],400);
+                    }
             }else{
                 return Response([
                     'status' => 'false',

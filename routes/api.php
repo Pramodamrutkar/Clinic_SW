@@ -11,6 +11,7 @@ use App\Http\Controllers\PersonalAccessTokenController;
 use App\Http\Controllers\InternalReportExportController;
 use App\Http\Controllers\Merchant;
 use App\Http\Controllers\SendReminderTostartBgServiceController;
+use App\Http\Controllers\MoneyTapController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -65,4 +66,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('/formula/{uuID}', [FormulaBuilderEngineController::class, 'searchOffer']);
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
     Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheDownloadUrl']);
+
+    Route::get('/moneytap/{app_id}', [MoneyTapController::class,'storeMoneyTapDetails']);
+
+
 });

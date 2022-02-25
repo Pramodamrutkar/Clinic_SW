@@ -1,13 +1,13 @@
 <?php
 
 return [
-    
+
     "authkey" => '2ad07e0adf065734',
-    
+
     "sender" => 'CRLINK',
 
     'otpexpire' => "75",
-    
+
     "pe_idEntityId" => "1001684972734281605",
 
     "templateId" => "1007534419559657571",
@@ -28,18 +28,30 @@ return [
     "moneyviewPartnerCode" => "21",
     "moneyviewUserName" => "creditlink",
     "moneyviewPassword" => "7@JCFZSg26fA",
-    
+
     //for UAT
     "cacheApiBaseUrl" => "https://test-partners.cashe.co.in/partner/",
     "cacheDownloadUrl" => "https://smarturl.it/CASHe_Website",
     "cachePartnerName" => "CreditLinks_Partner",
-    "passphrase" => 'CreditLinks@PRdC8$He$2o!#'
+    "passphrase" => 'CreditLinks@PRdC8$He$2o!#',
 
     //for Production
-    // "cacheApiBaseUrl" => "https://partners.cashe.co.in/partner/",
-    // "cacheDownloadUrl" => "https://smarturl.it/CreditLinks_Partner",
-    // "cachePartnerName" => "CreditLinks_Partner",
-    // "passphrase" => 'CreditLinks@bje#$Rwd2[$UdGS6'
-    
+    //"cacheApiBaseUrl" => "https://partners.cashe.co.in/partner/",
+    //"cacheDownloadUrl" => "https://smarturl.it/CreditLinks_Partner",
+    //"cachePartnerName" => "CreditLinks_Partner",
+    //"passphrase" => 'CreditLinks@bje#$Rwd2[$UdGS6'
+
+    //MoneyTap UAT
+    "moneyTapApiBaseUrl" => "https://dev.moneytap.com",
+    //"moneyTapClientId" => "https://smarturl.it/CASHe_Website",
+    //"moneyTapSecretId" => "CreditLinks_Partner",
+
+    //MoneyTap Production
+    //"moneyTapApiBaseUrl" => "https://app.moneytap.com",
+    //"moneyTapClientId" => "https://smarturl.it/CASHe_Website",
+    //"moneyTapSecretId" => "CreditLinks_Partner",
+    //"passphrase" => 'CreditLinks@PRdC8$He$2o!#'
+
+
 ];
 
