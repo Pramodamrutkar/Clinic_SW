@@ -72,13 +72,13 @@ class MoneyTapModel extends Model
         } catch (QueryException $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
-            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            ErrorLogModel::LogError($status = 500, $code, $message,$appId);
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
-            ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
+            ErrorLogModel::LogError($status = 500, $code, $message,$appId);
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
         }
@@ -142,27 +142,27 @@ class MoneyTapModel extends Model
                     "incomeInfo" => array(
                         "declared" => $creditAppData["monthly_income"],
                         "mode" => "NETBANKING",
-                        "bankIfscPrefixes" => array("HDFC")
+                        "bankIfscPrefixes" => array($moneyTapData->bank_ifsc_code)
                     ),
-                    "companyType"=> "PRIVATE_LIMITED",
+                    "companyType"=> $moneyTapData->company_type,
                     "jobType" => $creditAppData["employment_status_code"],
-                    "gender" => "MALE",
-                    "residenceType"=> "OWNED_BY_SELF_SPOUSE",
-                    "totalWorkExperienceInMonths"=> 24,
-                    "currentWorkExperienceInMonths"=> 24,
-                    "currentCityDurationInMonths"=> 24,
-                    "currentHomeAddressDurationInMonths"=> 24,
-                    "maritalStatus"=> "MARRIED",
-                    "officeEmail"=> "john@office.com",
-                    "companyName"=> "Microsoft",
-                    "employmentType"=> "FULL_TIME",
+                    "gender" => $moneyTapData->gender,
+                    "residenceType"=> $moneyTapData->residence_type,
+                    "totalWorkExperienceInMonths"=> $moneyTapData->total_work_experience,
+                    "currentWorkExperienceInMonths"=> $moneyTapData->current_work_experience_in_org,
+                    "currentCityDurationInMonths"=> $moneyTapData->current_city_duration,
+                    "currentHomeAddressDurationInMonths"=> $moneyTapData->current_home_address_duration,
+                    "maritalStatus"=> $moneyTapData->marital_status,
+                    "officeEmail"=>  $moneyTapData->office_email,
+                    "companyName"=>  $moneyTapData->company_name,
+                    "employmentType"=>  "FULLTIME",
                     "homeAddress"=> array(
-                        "addressLine1"=> "987, some other street",
-                        "pincode"=> "560002"
+                        "addressLine1"=> $creditAppData["address1"]." ".$creditAppData["address2"],
+                        "pincode"=> $creditAppData["postal_code"]
                     ),
                     "officeAddress" => array(
-                        "addressLine1"=> "123, Some street",
-                        "pincode"=> "560001"
+                        "addressLine1"=> $moneyTapData->office_address,
+                        "pincode"=> $creditAppData["postal_code"]
                     )
             );
 
