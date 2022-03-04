@@ -511,6 +511,7 @@ class UpwardsAppModel extends Model
     public function curlCommonFunction($url,$payload,$headersArray){
         $curl = curl_init();
         $string = json_encode($payload);
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,

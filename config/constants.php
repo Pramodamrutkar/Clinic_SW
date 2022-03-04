@@ -43,15 +43,15 @@ return [
 
     //MoneyTap UAT
     "moneyTapApiBaseUrl" => "https://dev.moneytap.com",
-    //"moneyTapClientId" => "https://smarturl.it/CASHe_Website",
-    //"moneyTapSecretId" => "CreditLinks_Partner",
+    "moneyTapClientId" => "dsa-creditlinks",
+    "moneyTapSecretId" => "vW66VH!Q_jCt6Gf!",
 
     //MoneyTap Production
     //"moneyTapApiBaseUrl" => "https://app.moneytap.com",
     //"moneyTapClientId" => "https://smarturl.it/CASHe_Website",
     //"moneyTapSecretId" => "CreditLinks_Partner",
-    //"passphrase" => 'CreditLinks@PRdC8$He$2o!#'
+    //"passphrase" => 'CreditLinks@PRdC8$He$2o!#',
 
-
+    "mtIframeUrl" => "https://web.moneytap.com?utm_source=mpx_creditlinks&utm_medium=Multi&utm_campaign=Pilot1&utm_content=CL"
 ];
 

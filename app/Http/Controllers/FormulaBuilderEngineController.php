@@ -136,6 +136,8 @@ class FormulaBuilderEngineController extends Controller
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}else if($value->lender_name == 'MoneyView'){
 				$lendersMainArray[$value->lender_name][] = $value->offer_name;
+			}else if($value->lender_name == 'MoneyTap'){
+				$lendersMainArray[$value->lender_name][] = $value->offer_name;
 			}else {
 				$lendersMainArray[$value->lender_name][] = "CASHe";
 			}
@@ -560,6 +562,27 @@ class FormulaBuilderEngineController extends Controller
             }
 		}
 
+        if(in_array('MoneyTap',$lender_name))
+		{
+			$moneyTapData =DB::table('money_tap')
+			->select('*')
+			->where('creditapp_uid',$creditAppUUID)
+			->get();
+			$moneyTapDataCnt = $moneyTapData->count();
+			if(!empty($moneyTapDataCnt))
+			{
+                for ($i=0; $i < count($moneyTapData); $i++) {
+                    if($moneyTapData[$i]->offer_expire_at == null || $moneyTapData[$i]->offer_expire_at >= $currentTime){
+                        foreach ($lendersMainArray['MoneyTap'] as $key1 => $value) {
+                            if (($key = array_search($value, $arr)) !== false) {
+                                unset($arr[$key]);
+                            }
+                        }
+                    }
+                }
+            }
+		}
+
 		return $arr;
 
 
@@ -679,6 +702,14 @@ class FormulaBuilderEngineController extends Controller
                 $data['Offers'][$i]['MinAmount']  = $getData[$i]['offers'][0]['offer_amount'];
             }else if($getData[$i]['lender_name'] == "Upwards"){
                 $data['Offers'][$i]['Lender']  = "Upwards";
+                $data['Offers'][$i]['LenderId']  = null;
+                $data['Offers'][$i]['LenderUrl']  = null;
+                $data['Offers'][$i]['LoanType']  = null;
+                $data['Offers'][$i]['OfferCode']  = null;
+                $data['Offers'][$i]['MaxAmount']  = $getData[$i]['offers'][0]['offer_amount'];
+                $data['Offers'][$i]['MinAmount']  = $getData[$i]['offers'][0]['offer_amount'];
+            }else if($getData[$i]['lender_name'] == "MoneyTap"){
+                $data['Offers'][$i]['Lender']  = "MoneyTap";
                 $data['Offers'][$i]['LenderId']  = null;
                 $data['Offers'][$i]['LenderUrl']  = null;
                 $data['Offers'][$i]['LoanType']  = null;

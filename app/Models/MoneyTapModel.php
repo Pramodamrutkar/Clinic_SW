@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\UpwardsAppModel;
+use App\Models\SmartList;
 use Exception;
 
 class MoneyTapModel extends Model
@@ -22,7 +23,8 @@ class MoneyTapModel extends Model
     public function storeMoneyTapData($request,$appId){
         try{
             $creditAppIdCount = CreditApp::where('creditapp_uuid',$appId)->count();
-            if($creditAppIdCount != 1){
+
+            if($creditAppIdCount == 0){
                 return Response([
                     'status' => 'fail',
                     'message' => 'Invalid AppID'
@@ -37,7 +39,6 @@ class MoneyTapModel extends Model
                     'message' => 'No Applied loan exist'
                 ],400);
             }
-
             $moneyTapUpdateData->gender = $request['gender'];
             $moneyTapUpdateData->income_mode = $request['income_mode'];
             $moneyTapUpdateData->bank_account_holder_name = $request['bank_account_holder_name'];
@@ -55,13 +56,16 @@ class MoneyTapModel extends Model
 
             $lenderCustomerId = $this->createLeadwithMoneyTap($moneyTapUpdateData,$appId);
 
-            $moneyTapUpdateData->lender_customer_id = $lenderCustomerId;
-
+            $moneyTapUpdateData->lender_customer_id = $lenderCustomerId ?? 0;
+            $mtIframeUrl = config('constants.mtIframeUrl');
             if($moneyTapUpdateData->save()){
+                $moneyTapSFDC = $this->buildArrayForMoneyTapToSFDC($moneyTapUpdateData);
+                $casheAppModelObj = new CasheAppModel();
+				$casheAppModelObj->storeAdditionalDataInSFDC($moneyTapSFDC);
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
-                    'mvIframeUrl' => $moneyTapUpdateData->journey_url
+                    'moneyTapURL' => $mtIframeUrl
                 ],200);
             }else{
                 return Response([
@@ -98,14 +102,27 @@ class MoneyTapModel extends Model
             $tokenUrl = "/oauth/token?grant_type=client_credentials";
             $url = $moneyTapBaseApiUrl.$tokenUrl;
 
-            $payload = array();
-            $headersArray = array(
-                "Content-Type: application/json",
-                "Authorization : Basic $clientIdSecretIdEncoded"
-            );
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    'Authorization: Basic '.$clientIdSecretIdEncoded
+                ),
+            ));
 
-            $upwardAppModel = new UpwardsAppModel();
-            $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
+            $response = curl_exec($curl);
+            $response = json_decode($response, true);
+            curl_close($curl);
+            // $upwardAppModel = new UpwardsAppModel();
+            // $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
             if(!empty($response)){
                     return $response["access_token"];
             }else{
@@ -132,30 +149,41 @@ class MoneyTapModel extends Model
             $token = $this->getMoneyTapToken();
             $moneyTapBaseApiUrl = config('constants.moneyTapApiBaseUrl');
             $url = $moneyTapBaseApiUrl."/v3/partner/buildprofile";
-
+            $jobTypeFromSmartList = SmartList::getFieldDescription($creditAppData["employment_status_code"]);
+            if($jobTypeFromSmartList == "Wrkr"){
+                $jobType = "SALARIED";
+            }else if($jobTypeFromSmartList == "Slf"){
+                $jobType = "SELF_EMPLOYED";
+            }else if($jobTypeFromSmartList == "Stdnt"){
+                $jobType = "STUDENT";
+            }else if($jobTypeFromSmartList == "Othr"){
+                $jobType = "HOMEMAKER";
+            }else if($jobTypeFromSmartList == "Rtird"){
+                $jobType = "RETIRED";
+            }
             $payload = array(
-                    "name" => $creditAppData["firstname"]." ".$creditAppData["lastname"],
+                    "name" => $creditAppData["first_name"]." ".$creditAppData["last_name"],
                     "phone" => $creditAppData["mobile_phone_number"],
                     "emailId" => $creditAppData["email"],
                     "panNumber" => $creditAppData["tin"],
                     "dateOfBirth" => $creditAppData["birth_date"],
                     "incomeInfo" => array(
                         "declared" => $creditAppData["monthly_income"],
-                        "mode" => "NETBANKING",
-                        "bankIfscPrefixes" => array($moneyTapData->bank_ifsc_code)
+                        "mode" => SmartList::getFieldDescription($moneyTapData->income_mode),
+                        "bankIfscPrefixes" => array(substr($moneyTapData->bank_ifsc_code, 0, 4))
                     ),
-                    "companyType"=> $moneyTapData->company_type,
-                    "jobType" => $creditAppData["employment_status_code"],
-                    "gender" => $moneyTapData->gender,
-                    "residenceType"=> $moneyTapData->residence_type,
-                    "totalWorkExperienceInMonths"=> $moneyTapData->total_work_experience,
-                    "currentWorkExperienceInMonths"=> $moneyTapData->current_work_experience_in_org,
-                    "currentCityDurationInMonths"=> $moneyTapData->current_city_duration,
-                    "currentHomeAddressDurationInMonths"=> $moneyTapData->current_home_address_duration,
-                    "maritalStatus"=> $moneyTapData->marital_status,
+                    "companyType"=> SmartList::getFieldDescription($moneyTapData->company_type),
+                    "jobType" => $jobType,
+                    "gender" => SmartList::getFieldDescription($moneyTapData->gender),
+                    "residenceType"=> SmartList::getFieldDescription($moneyTapData->residence_type),
+                    "totalWorkExperienceInMonths"=> intval($moneyTapData->total_work_experience),
+                    "currentWorkExperienceInMonths"=> intval($moneyTapData->current_work_experience_in_org),
+                    "currentCityDurationInMonths"=> intval($moneyTapData->current_city_duration),
+                    "currentHomeAddressDurationInMonths"=> intval($moneyTapData->current_home_address_duration),
+                    "maritalStatus"=> SmartList::getFieldDescription($moneyTapData->marital_status),
                     "officeEmail"=>  $moneyTapData->office_email,
                     "companyName"=>  $moneyTapData->company_name,
-                    "employmentType"=>  "FULLTIME",
+                    "employmentType"=>  "FULL_TIME",
                     "homeAddress"=> array(
                         "addressLine1"=> $creditAppData["address1"]." ".$creditAppData["address2"],
                         "pincode"=> $creditAppData["postal_code"]
@@ -167,14 +195,20 @@ class MoneyTapModel extends Model
             );
 
             $headersArray = array(
-                "Content-Type: application/json",
-                "Authorization : Bearer $token"
+                'Accept: application/json',
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$token
             );
 
             $upwardAppModel = new UpwardsAppModel();
             $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
             if(!empty($response)){
-                    return $response["customerId"];
+                    if(isset($response["customerId"])){
+                        return $response["customerId"];
+                    }else{
+                        ErrorLogModel::LogError(200, 200, "MoneyTap=".json_encode($response));
+                        return 0;
+                    }
             }else{
                 $message = "Unable to create lead for MoneyTap service";
                 ErrorLogModel::LogError(400, 400, $message);
@@ -205,14 +239,16 @@ class MoneyTapModel extends Model
             );
 
             $headersArray = array(
-                "Content-Type: application/json",
-                "Authorization : Bearer $token"
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$token
             );
 
             $upwardAppModel = new UpwardsAppModel();
             $response = $upwardAppModel->curlCommonFunction($url, $payload, $headersArray);
             if(!empty($response)){
-                    return $response;
+                    ErrorLogModel::LogError(200, 200, "MoneyTap Lead Status => ".json_encode($response));
+                    $lapStatus = OfferStatusModel::getLapStatus("MoneyTap",$response["finalApprovalStatus"]);
+                    return $lapStatus;
             }else{
                 $message = "Unable to get status of customer lead for MoneyTap service";
                 ErrorLogModel::LogError(400, 400, $message);
@@ -228,5 +264,36 @@ class MoneyTapModel extends Model
         }
     }
 
+
+    public function buildArrayForMoneyTapToSFDC($moneyTapUpdateData)
+	{
+        $moneyTapSFDC = array();
+		$moneyTapSFDC['Id'] = $moneyTapUpdateData->creditapp_uid;
+		$moneyTapSFDC['Gender'] = SmartList::getFieldDescription($moneyTapUpdateData->gender);
+		$moneyTapSFDC['LenderName'] = $moneyTapUpdateData->lender_name;
+		$moneyTapSFDC['IncodeMode'] = SmartList::getFieldDescription($moneyTapUpdateData->income_mode);
+		$moneyTapSFDC['BankAccountHolderName'] = $moneyTapUpdateData->bank_account_holder_name;
+        $moneyTapSFDC['BankIfscCode'] = $moneyTapUpdateData->bank_ifsc_code;
+        $moneyTapSFDC['MaritalStatus'] = SmartList::getFieldDescription($moneyTapUpdateData->marital_status);
+        $moneyTapSFDC['OfficeEmail'] = $moneyTapUpdateData->office_email;
+        $moneyTapSFDC['CompanyName'] = $moneyTapUpdateData->company_name;
+        $moneyTapSFDC['CompanyType'] = $moneyTapUpdateData->company_type;
+        $moneyTapSFDC['OfficeAddress'] = $moneyTapUpdateData->office_address;
+        $moneyTapSFDC['ResidenceType'] = SmartList::getFieldDescription($moneyTapUpdateData->residence_type);
+        $moneyTapSFDC['CurrentCityDuration'] = $moneyTapUpdateData->current_city_duration;
+        $moneyTapSFDC['CurrentHomeAddressDuration'] = $moneyTapUpdateData->current_home_address_duration;
+        $moneyTapSFDC['TotalWorkExperience'] = $moneyTapUpdateData->total_work_experience;
+        $moneyTapSFDC['CurrentWorkExperienceInOrg'] = $moneyTapUpdateData->current_work_experience_in_org;
+        $moneyTapSFDC['Created'] = $moneyTapUpdateData->created_at;
+		$moneyTapSFDC['MisStatus'] = $moneyTapUpdateData->mis_status;
+		$moneyTapSFDC['LenderCustomerId'] = $moneyTapUpdateData->lender_customer_id;
+        $moneyTapSFDC['SelectedOffer']['EMI'] = $moneyTapUpdateData->emi;
+		$moneyTapSFDC['SelectedOffer']['Amount'] = $moneyTapUpdateData->amount;
+		$moneyTapSFDC['SelectedOffer']['TermsMonth'] = $moneyTapUpdateData->term_months;
+		$moneyTapSFDC['SelectedOffer']['Fees'] = $moneyTapUpdateData->processing_fees;
+		$moneyTapSFDC['SelectedOffer']['Created'] = $moneyTapUpdateData->created_at;
+		$moneyTapSFDC['SelectedOffer']['Rate'] = $moneyTapUpdateData->annual_interest_rate;
+		return $moneyTapSFDC;
+	}
 
 }

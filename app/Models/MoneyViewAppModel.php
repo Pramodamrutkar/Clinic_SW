@@ -10,6 +10,7 @@ use App\Models\CreditApp;
 use App\Models\CasheAppModel;
 use App\Models\UpwardsAppModel;
 use App\Models\OfferStatusModel;
+use App\Models\MoneyTapModel;
 use DB;
 use Exception;
 
@@ -134,19 +135,41 @@ class MoneyViewAppModel extends Model
                 }
             }
 
-            $moneyViewUpdateData = MoneyViewAppModel::select('*')->where('creditapp_uid',$app_id)->first();
-            if(!empty($moneyViewUpdateData)){
-                $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
-                if(!empty($mvLenderSystemId)){
-                    $offerExpireArray = array("Expired","Declined");
-                    $status = $this->getMvStatus($mvLenderSystemId);
-                    $moneyViewUpdateData->mis_status = $status ?? "Initiated";
-                    if(in_array($status,$offerExpireArray)){
-                        $moneyViewUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+            $mvstatusOnOff = ExternalConnectorsModel::externalConnects("MVSTATUS");
+            if($mvstatusOnOff == 1){
+                $moneyViewUpdateData = MoneyViewAppModel::select('*')->where('creditapp_uid',$app_id)->first();
+                if(!empty($moneyViewUpdateData)){
+                    $mvLenderSystemId = $moneyViewUpdateData["lender_system_id"];
+                    if(!empty($mvLenderSystemId)){
+                        $offerExpireArray = array("Expired","Declined");
+                        $status = $this->getMvStatus($mvLenderSystemId);
+                        $moneyViewUpdateData->mis_status = $status ?? "Initiated";
+                        if(in_array($status,$offerExpireArray)){
+                            $moneyViewUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+                        }
+                        $moneyViewUpdateData->save();
                     }
-                    $moneyViewUpdateData->save();
                 }
             }
+            $mvstatusOnOff = ExternalConnectorsModel::externalConnects("MTSTATUS");
+            if($mvstatusOnOff == 1){
+                $moneyTapUpdateData = MoneyTapModel::select('*')->where('creditapp_uid',$app_id)->first();
+                if(!empty($moneyTapUpdateData)){
+                    $mtCustomerId = $moneyTapUpdateData["lender_customer_id"];
+                    if(!empty($mtCustomerId)){
+                        $offerExpireArray = array("Expired","Declined");
+                        $moneyTapModel = new MoneyTapModel();
+                        $status = $moneyTapModel->getMoneyTapLeadStatus($mtCustomerId);
+                        $moneyTapUpdateData->mis_status = $status ?? "In-Progress";
+                        if(in_array($status,$offerExpireArray)){
+                            $moneyTapUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
+                        }
+                        $moneyTapUpdateData->save();
+                    }
+                }
+            }
+
+
 
             // $offerData = DB::table('moneyview_app')
             // ->leftJoin('upwards_app', 'moneyview_app.creditapp_uid', '=' ,'upwards_app.creditapp_uid')
@@ -158,10 +181,14 @@ class MoneyViewAppModel extends Model
             $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status','upwards_app.Iframe_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
+            $moneyTap = MoneyTapModel::select('money_tap.lender_name as lender','money_tap.amount as amount','money_tap.mis_status as status')->where('creditapp_uid',$app_id)->first();
 
             $offerData = array();
             if(!empty($upwardsApp)){
                 $offerData[] = $upwardsApp;
+            }
+            if(!empty($moneyTap)){
+                $offerData[] = $moneyTap;
             }
             if(!empty($moneyView)){
                 $offerData[] = $moneyView;
@@ -187,12 +214,12 @@ class MoneyViewAppModel extends Model
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            //echo ErrorLogModel::genericMessage();
         } catch (Exception $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$app_id);
-            echo ErrorLogModel::genericMessage();
+            //echo ErrorLogModel::genericMessage();
         }
     }
 
