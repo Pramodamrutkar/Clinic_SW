@@ -71,23 +71,22 @@ class FormulaBuilderEngineController extends Controller
 		$to   = new DateTime('today');
 		$age  = $from->diff($to)->y;
 
-
         $locationData = Locations::where('postal_code', $postalCode)->first();
 
-
-		if(empty($locationData)){
+        if(empty($locationData)){
 			$cityTier = 100;
 			ErrorLogModel::LogError($status = "failure",400,"Pincode not serviceable".$postalCode, $creditAppUUID);
 		}else{
 			$cityTier = $locationData->city_tier;
 		}
 
-		$offerName = DB::select('SELECT offer_name,lender_name FROM `formula_builder_engine` where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');
+		$offerName = DB::select('SELECT offer_name,lender_name,offer_max_number FROM `formula_builder_engine` where (offer_key = "amount" AND offer_min_number <= "'.$monthlyIncome.'" AND offer_max_number >= "'.$monthlyIncome.'" AND status = 1)');
 
 
 		foreach($offerName as $v1)
 		{
 			$new_arr_1[] = $v1->offer_name;
+            $offermaxAmount[$v1->lender_name] = $v1->offer_max_number;
 		}
 
 		if(empty($new_arr_1))
@@ -126,6 +125,11 @@ class FormulaBuilderEngineController extends Controller
 			->where(['offer_key'=>'employeement_type','offer_number'=>$employeementStatus,'status'=>'1'])
 			->get();
 
+
+        $serviceAbleCount = $this->checkPostalCodeServiceableOrNot(104,$postalCode);
+        if($serviceAbleCount > 0){
+            $offerName3 = $this->avoidOfferFromEngine($serviceAbleCount,$offerName3);
+        }
 
 		$lendersMainArray = array();
 		foreach($offerName3 as $value)
@@ -245,9 +249,12 @@ class FormulaBuilderEngineController extends Controller
 				$grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome / 100;
 				$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome / 100;
 			}else{
-				$grantAmount_1 = $val['offer_grant_amount_1'] * $monthlyIncome;
-				$grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome;
-				$grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome;
+				// $grantAmount_1 = $val['offer_grant_amount_1'] * $monthlyIncome;
+				// $grantAmount_2 = $val['offer_grant_amount_2'] * $monthlyIncome;
+				// $grantAmount_3 = $val['offer_grant_amount_3'] * $monthlyIncome;
+                 $grantAmount_1 = $val['offer_grant_amount_1'] * $offermaxAmount["MoneyTap"];
+				 $grantAmount_2 = $val['offer_grant_amount_2'] * $offermaxAmount["MoneyTap"];
+				 $grantAmount_3 = $val['offer_grant_amount_3'] * $offermaxAmount["MoneyTap"];
 			}
 
 
@@ -335,8 +342,8 @@ class FormulaBuilderEngineController extends Controller
 				}
 			}
 
-
 				$Final_array = array_chunk($main_array,3);
+
 
 
 				$getData = $this->my_array_merge($array1, $Final_array);
@@ -456,6 +463,7 @@ class FormulaBuilderEngineController extends Controller
 						}
 					}
 				}
+
 				$this->updateKnockoutLender($creditAppUUID, $lender_name);
                 if(!empty($offersToSF)){
                    $data = $this->createSFoffersArray($getData);
@@ -720,4 +728,25 @@ class FormulaBuilderEngineController extends Controller
         }
         return json_encode($data);
     }
+
+    public function checkPostalCodeServiceableOrNot($lenderId,$postalCode){
+        $locationData = Locations::where('lender_id', $lenderId)->where('postal_code', $postalCode)->where('is_serviceable',0)->count();
+        return $locationData;
+    }
+
+    public function avoidOfferFromEngine($locationDataCount,$offerArray){
+        if($locationDataCount > 0){
+            if(!empty($offerArray)){
+
+                foreach ($offerArray as $key => $value) {
+
+                    if($value->lender_name == "MoneyTap"){
+                        unset($offerArray[$key]);
+                    }
+                }
+                return $offerArray;
+            }
+        }
+    }
+
 }

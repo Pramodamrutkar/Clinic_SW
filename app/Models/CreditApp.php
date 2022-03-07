@@ -167,11 +167,12 @@ class CreditApp extends Model
     {
         try {
             //$creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->orWhere('email', $request->email)->first();
-            $creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
+            //$creditProspectData = CreditProspect::where('mobile_phone_number', $request->mobile_phone_number)->where('email', $request->email)->orderBy('created_at', 'desc')->first();
+            $creditProspectData = CreditProspect::where('credituid', $request->credit_prospect_id)->first();
             if (empty($creditProspectData)) {
                 return response([
                     'success' => 'false',
-                    'message' => 'You have entered incorrect phone or email!'
+                    'message' => 'Incorrect Prospect Id!'
                 ], 400);
             }
 
