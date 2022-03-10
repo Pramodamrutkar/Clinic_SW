@@ -24,7 +24,7 @@ class AggTopFunnelReport  implements FromCollection,WithEvents,WithTitle,ShouldA
         foreach ($repTopfunnelArray as $key => $value) {
             $headingsData[] = array(
                 "MerchantTrackingId" => $value["MerchantTrackingId"],
-                "Date" => $value["Date"],
+                //"Date" => $value["Date"],
                 "Sessions" => $value["Sessions"] ?? 0, 
                 "OTPRequests" => $value["OTPRequests"] ?? 0,
                 "OTPUsed" => $value["OTPUsed"] ?? 0,

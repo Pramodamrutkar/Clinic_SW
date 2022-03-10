@@ -151,21 +151,24 @@ class MoneyViewAppModel extends Model
                     }
                 }
             }
-            $mvstatusOnOff = ExternalConnectorsModel::externalConnects("MTSTATUS");
-            if($mvstatusOnOff == 1){
+            $mtstatusOnOff = ExternalConnectorsModel::externalConnects("MTSTATUS");
+            if($mtstatusOnOff == 1){
                 $moneyTapUpdateData = MoneyTapModel::select('*')->where('creditapp_uid',$app_id)->first();
                 if(!empty($moneyTapUpdateData)){
                     $mtCustomerId = $moneyTapUpdateData["lender_customer_id"];
-                    if(!empty($mtCustomerId)){
+
                         $offerExpireArray = array("Expired","Declined");
                         $moneyTapModel = new MoneyTapModel();
-                        $status = $moneyTapModel->getMoneyTapLeadStatus($mtCustomerId);
-                        $moneyTapUpdateData->mis_status = $status ?? "In-Progress";
+                        $status = "";
+                        if(!empty($mtCustomerId)){
+                            $status = $moneyTapModel->getMoneyTapLeadStatus($mtCustomerId);
+                        }
+                        $moneyTapUpdateData->mis_status = ($status == "") ? "In-Progress" : $status;
                         if(in_array($status,$offerExpireArray)){
                             $moneyTapUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
                         }
                         $moneyTapUpdateData->save();
-                    }
+
                 }
             }
 
@@ -181,7 +184,7 @@ class MoneyViewAppModel extends Model
             $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status','upwards_app.Iframe_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
-            $moneyTap = MoneyTapModel::select('money_tap.lender_name as lender','money_tap.amount as amount','money_tap.mis_status as status')->where('creditapp_uid',$app_id)->first();
+            $moneyTap = MoneyTapModel::select('money_tap.lender_name as lender','money_tap.amount as amount','money_tap.mis_status as status','money_tap.mt_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
 
             $offerData = array();
             if(!empty($upwardsApp)){

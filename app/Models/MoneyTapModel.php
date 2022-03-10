@@ -53,15 +53,22 @@ class MoneyTapModel extends Model
             $moneyTapUpdateData->current_home_address_duration = $request['current_home_address_duration'];
             $moneyTapUpdateData->total_work_experience = $request['total_work_experience'];
             $moneyTapUpdateData->current_work_experience_in_org = $request['current_work_experience_in_org'];
+            $statusOnOff = ExternalConnectorsModel::externalConnects("CHECKMTLEAD");
 
-            $lenderCustomerId = $this->createLeadwithMoneyTap($moneyTapUpdateData,$appId);
-
-            $moneyTapUpdateData->lender_customer_id = $lenderCustomerId ?? 0;
+            if($statusOnOff == 1){
+                $lenderCustomerId = $this->createLeadwithMoneyTap($moneyTapUpdateData,$appId);
+                $moneyTapUpdateData->lender_customer_id = $lenderCustomerId ?? 0;
+            }else{
+                $moneyTapUpdateData->lender_customer_id = 0;
+            }
             $mtIframeUrl = config('constants.mtIframeUrl');
             if($moneyTapUpdateData->save()){
-                $moneyTapSFDC = $this->buildArrayForMoneyTapToSFDC($moneyTapUpdateData);
-                $casheAppModelObj = new CasheAppModel();
-				$casheAppModelObj->storeAdditionalDataInSFDC($moneyTapSFDC);
+                $mvstatusOnOff = ExternalConnectorsModel::externalConnects("MONEYTAPLAPTOSF");
+                if($mvstatusOnOff == 1){
+                    $moneyTapSFDC = $this->buildArrayForMoneyTapToSFDC($moneyTapUpdateData);
+                    $casheAppModelObj = new CasheAppModel();
+                    $casheAppModelObj->storeAdditionalDataInSFDC($moneyTapSFDC);
+                }
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
@@ -272,21 +279,21 @@ class MoneyTapModel extends Model
 		$moneyTapSFDC['Gender'] = SmartList::getFieldDescription($moneyTapUpdateData->gender);
 		$moneyTapSFDC['LenderName'] = $moneyTapUpdateData->lender_name;
 		$moneyTapSFDC['IncodeMode'] = SmartList::getFieldDescription($moneyTapUpdateData->income_mode);
-		$moneyTapSFDC['BankAccountHolderName'] = $moneyTapUpdateData->bank_account_holder_name;
-        $moneyTapSFDC['BankIfscCode'] = $moneyTapUpdateData->bank_ifsc_code;
+		$moneyTapSFDC['BankAccountHolderFullName'] = $moneyTapUpdateData->bank_account_holder_name;
+        $moneyTapSFDC['IFSC'] = $moneyTapUpdateData->bank_ifsc_code;
         $moneyTapSFDC['MaritalStatus'] = SmartList::getFieldDescription($moneyTapUpdateData->marital_status);
         $moneyTapSFDC['OfficeEmail'] = $moneyTapUpdateData->office_email;
-        $moneyTapSFDC['CompanyName'] = $moneyTapUpdateData->company_name;
+        $moneyTapSFDC['Company'] = $moneyTapUpdateData->company_name;
         $moneyTapSFDC['CompanyType'] = $moneyTapUpdateData->company_type;
         $moneyTapSFDC['OfficeAddress'] = $moneyTapUpdateData->office_address;
-        $moneyTapSFDC['ResidenceType'] = SmartList::getFieldDescription($moneyTapUpdateData->residence_type);
+        $moneyTapSFDC['ResidencyType'] = SmartList::getFieldDescription($moneyTapUpdateData->residence_type);
         $moneyTapSFDC['CurrentCityDuration'] = $moneyTapUpdateData->current_city_duration;
         $moneyTapSFDC['CurrentHomeAddressDuration'] = $moneyTapUpdateData->current_home_address_duration;
         $moneyTapSFDC['TotalWorkExperience'] = $moneyTapUpdateData->total_work_experience;
         $moneyTapSFDC['CurrentWorkExperienceInOrg'] = $moneyTapUpdateData->current_work_experience_in_org;
         $moneyTapSFDC['Created'] = $moneyTapUpdateData->created_at;
 		$moneyTapSFDC['MisStatus'] = $moneyTapUpdateData->mis_status;
-		$moneyTapSFDC['LenderCustomerId'] = $moneyTapUpdateData->lender_customer_id;
+		$moneyTapSFDC['LenderSystemId'] = $moneyTapUpdateData->lender_customer_id;
         $moneyTapSFDC['SelectedOffer']['EMI'] = $moneyTapUpdateData->emi;
 		$moneyTapSFDC['SelectedOffer']['Amount'] = $moneyTapUpdateData->amount;
 		$moneyTapSFDC['SelectedOffer']['TermsMonth'] = $moneyTapUpdateData->term_months;

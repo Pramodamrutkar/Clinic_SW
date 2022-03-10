@@ -69,5 +69,4 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('/moneytap/{app_id}', [MoneyTapController::class,'storeMoneyTapDetails']);
 
 });
-
 //Route::get('/checkMtToken', [MoneyTapController::class,'checkTokenMT']);

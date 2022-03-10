@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use DB;
 
 class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSize
-{   
+{
 
     /**
     * @return \Illuminate\Support\Collection
@@ -23,8 +23,9 @@ class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSi
         foreach ($appDataArray as $key => $value) {
             $headingsData[] = array(
                 "MerchantTrackingId" => $value["MerchantTrackingId"],
+                "CreditProspectId" => $value["credituid"],
                 "CreditProspectCreated" => $value["CreditProspectCreated"],
-                "CreditAppCreated" => $value["CreditAppCreated"], 
+                "CreditAppCreated" => $value["CreditAppCreated"],
                 "TimetoCreate" => $value["TimetoCreate"],
                 "PartialDOB" => $value["PartialDOB"],
                 "PartialPAN" => $value["PartialPAN"],
@@ -53,7 +54,7 @@ class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSi
                 "UpwardsId" => $value["UpwardsId"],
                 "CasheId" => $value["CasheId"]
             );
-        } 
+        }
         return collect($headingsData);
     }
 
@@ -61,7 +62,7 @@ class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSi
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A1:AD1')->applyFromArray([
+                $event->sheet->getStyle('A1:AE1')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ]
@@ -73,6 +74,6 @@ class InternalReport implements FromCollection,WithEvents,WithTitle,ShouldAutoSi
     public function title(): string
     {
         $title = "Main";
-        return $title; 
+        return $title;
     }
 }
