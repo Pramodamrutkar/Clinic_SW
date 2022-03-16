@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\CreditApp;
+use App\Models\NiraModel;
 use App\Models\SmartList;
 use Exception;
 
@@ -434,6 +435,26 @@ class UpwardsAppModel extends Model
                             'message' => 'Something went wrong'
                         ],400);
                     }
+            }else if($request['lender_name'] == "Nira"){
+                    $niraTap = new NiraModel();
+                    $niraTap->creditapp_uid = trim($app_id);
+                    $niraTap->amount = $request['amount'];
+                    $niraTap->annual_interest_rate = $request['annual_interest_rate'];
+                    $niraTap->term_months = $request['term_months'];
+                    $niraTap->processing_fees = $request['processing_fees'];
+                    $niraTap->mis_status = "Initiated";
+                    if($niraTap->save()){
+                        return Response([
+                            'status' => 'true',
+                            'message' => 'saved data successfully!',
+                            'nira_id' => $niraTap->nira_id
+                        ],200);
+                    }else{
+                        return Response([
+                            'status' => 'false',
+                            'message' => 'Something went wrong'
+                        ],400);
+                    }
             }else{
                 return Response([
                     'status' => 'false',
@@ -472,6 +493,7 @@ class UpwardsAppModel extends Model
                 $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as Lender', 'upwards_app.lender_system_id as LenderId', 'upwards_app.processing_fees as FeesInfo','upwards_app.annual_interest_rate as RateInfo','upwards_app.emi as Emi','upwards_app.amount as Amount','upwards_app.term_months as TermMonths','upwards_app.loan_purpose as LoanType')->where('creditapp_uid',$id)->first();
                 $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as Lender', 'moneyview_app.lender_system_id as LenderId', 'moneyview_app.processing_fees as FeesInfo','moneyview_app.annual_interest_rate as RateInfo','moneyview_app.emi as Emi','moneyview_app.amount as Amount','moneyview_app.term_months as TermMonths')->where('creditapp_uid',$id)->first();
                 $casheApp = CasheAppModel::select('cashe_app.lender_name as Lender', 'cashe_app.lender_system_id as LenderId', 'cashe_app.processing_fees as FeesInfo','cashe_app.annual_interest_rate as RateInfo','cashe_app.emi as Emi','cashe_app.amount as Amount','cashe_app.term_months as TermMonths')->where('creditapp_uid',$id)->first();
+                $moneyTap = MoneyTapModel::select('money_tap.lender_name as Lender', 'money_tap.lender_customer_id as LenderId', 'money_tap.processing_fees as FeesInfo','money_tap.annual_interest_rate as RateInfo','money_tap.emi as Emi','money_tap.amount as Amount','money_tap.term_months as TermMonths')->where('creditapp_uid',$id)->first();
                 $offerData = array();
                 if(!empty($upwardsApp)){
                     $offerData[] = $upwardsApp;
@@ -481,6 +503,9 @@ class UpwardsAppModel extends Model
                 }
                 if(!empty($casheApp)){
                     $offerData[] = $casheApp;
+                }
+                if(!empty($moneyTap)){
+                    $offerData[] = $moneyTap;
                 }
                 $records = array("Offers" => $offerData);
                 return $records;

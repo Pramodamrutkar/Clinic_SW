@@ -11,6 +11,7 @@ use App\Models\CasheAppModel;
 use App\Models\UpwardsAppModel;
 use App\Models\OfferStatusModel;
 use App\Models\MoneyTapModel;
+use App\Models\NiraModel;
 use DB;
 use Exception;
 
@@ -97,7 +98,6 @@ class MoneyViewAppModel extends Model
             }
             $upwardlenderSystemId = '';
             $UpwardsAppModel = UpwardsAppModel::select('*')->where('creditapp_uid',$app_id)->first();
-
             if(!empty($UpwardsAppModel)){
                 $upwardlenderSystemId = $UpwardsAppModel['lender_system_id'];
                 $lenderCustomerId = $UpwardsAppModel['lender_customer_id'];
@@ -154,16 +154,19 @@ class MoneyViewAppModel extends Model
             $mtstatusOnOff = ExternalConnectorsModel::externalConnects("MTSTATUS");
             if($mtstatusOnOff == 1){
                 $moneyTapUpdateData = MoneyTapModel::select('*')->where('creditapp_uid',$app_id)->first();
-                if(!empty($moneyTapUpdateData)){
-                    $mtCustomerId = $moneyTapUpdateData["lender_customer_id"];
 
+                if(!empty($moneyTapUpdateData)){
+                        $mtCustomerId = $moneyTapUpdateData["lender_customer_id"];
                         $offerExpireArray = array("Expired","Declined");
-                        $moneyTapModel = new MoneyTapModel();
-                        $status = "";
+                        $status = $moneyTapUpdateData["mis_status"];
                         if(!empty($mtCustomerId)){
+                            $moneyTapModel = new MoneyTapModel();
                             $status = $moneyTapModel->getMoneyTapLeadStatus($mtCustomerId);
+                        }else if(!empty($moneyTapUpdateData["gender"]) && !empty($moneyTapUpdateData["income_mode"])){
+                            $moneyTapUpdateData->mis_status ="In-Progress";
+                        }else{
+                            $moneyTapUpdateData->mis_status = ($status == "") ? "In-Progress" : $status;
                         }
-                        $moneyTapUpdateData->mis_status = ($status == "") ? "In-Progress" : $status;
                         if(in_array($status,$offerExpireArray)){
                             $moneyTapUpdateData->offer_expire_at = date('Y:m:d H:i:s', strtotime('+45 days'));
                         }
@@ -179,13 +182,13 @@ class MoneyViewAppModel extends Model
             // ->leftJoin('cashe_app','cashe_app.creditapp_uid', '=', 'moneyview_app.creditapp_uid')
             // ->where('moneyview_app.creditapp_uid','=',trim($app_id))
             // ->select('moneyview_app.lender_system_id as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','upwards_app.lender_system_id as upwardsLender','upwards_app.amount as upwardsAmount','upwards_app.mis_status as upwardsStatus','cashe_app.lender_system_id as casheLender','cashe_app.amount as casheAmount','cashe_app.mis_status as casheStatus')
-            // ->first();
+            // ->first();'CASE WHEN money_tap.mis_status="Initiated" THEN money_tap.mt_url = "" END AS Iframe_url',
 
             $upwardsApp = UpwardsAppModel::select('upwards_app.lender_name as lender','upwards_app.amount as amount','upwards_app.mis_status as status','upwards_app.Iframe_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $moneyView = MoneyViewAppModel::select('moneyview_app.lender_name as lender','moneyview_app.amount as amount','moneyview_app.mis_status as status','moneyview_app.journey_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $casheApp = CasheAppModel::select('cashe_app.lender_name as lender','cashe_app.amount as amount','cashe_app.mis_status as status')->where('creditapp_uid',$app_id)->first();
-            $moneyTap = MoneyTapModel::select('money_tap.lender_name as lender','money_tap.amount as amount','money_tap.mis_status as status','money_tap.mt_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
-
+            $moneyTap = MoneyTapModel::select('money_tap.lender_name as lender','money_tap.amount as amount','money_tap.mis_status as status', \DB::raw('IF(money_tap.mis_status ="Initiated", null, money_tap.mt_url) as Iframe_url'))->where('creditapp_uid',$app_id)->first();
+			$nira = NiraModel::select('nira.lender_name as lender','nira.amount as amount','nira.mis_status as status','nira.mt_url as Iframe_url')->where('creditapp_uid',$app_id)->first();
             $offerData = array();
             if(!empty($upwardsApp)){
                 $offerData[] = $upwardsApp;
@@ -199,7 +202,9 @@ class MoneyViewAppModel extends Model
             if(!empty($casheApp)){
                 $offerData[] = $casheApp;
             }
-
+			if(!empty($nira)){
+                $offerData[] = $nira;
+            }
             if(!empty($offerData)){
                 return Response([
                     'status' => 'true',

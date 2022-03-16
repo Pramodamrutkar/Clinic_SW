@@ -17,6 +17,7 @@ use App\Models\UpwardsAppModel;
 use App\Models\ExternalConnectorsModel;
 use App\Models\ErrorLogModel;
 use App\Models\MoneyViewAppModel;
+use App\Models\OffersDataModel;
 use App\Models\PersonalAccessToken;
 use DateTime;
 use DB;
@@ -70,7 +71,8 @@ class FormulaBuilderEngineController extends Controller
 		$from = new DateTime($birthDate);
 		$to   = new DateTime('today');
 		$age  = $from->diff($to)->y;
-
+        //created for dummy offers
+        $storeDataArray = array("creditapp_uid"=> $creditAppUUID, "email" => $emailId,"mobile_no" => $mobilePhoneNumber, "postal_code" => $postalCode, "employment_type"=> $employeementStatus, "age"=> $age);
         $locationData = Locations::where('postal_code', $postalCode)->first();
 
         if(empty($locationData)){
@@ -473,6 +475,7 @@ class FormulaBuilderEngineController extends Controller
                 if ($statusOnOff == 1) {
                     $this->updateLenderInSF($creditAppUUID);  //code to save data into salesforce
                 }
+                OffersDataModel::saveOffersData($getData,$storeDataArray);
 		return $getData;
     }
 

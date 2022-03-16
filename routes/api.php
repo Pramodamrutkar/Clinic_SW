@@ -14,6 +14,8 @@ use App\Http\Controllers\SendReminderTostartBgServiceController;
 use App\Http\Controllers\MoneyTapController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NiraController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +69,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('/initiate-loan', [UpwardsApp::class, 'initiateLoan']);
     Route::get('/cashe-download/{app_id}', [CasheApp::class,'casheDownloadUrl']);
     Route::post('/moneytap/{app_id}', [MoneyTapController::class,'storeMoneyTapDetails']);
+    Route::post('/nira/{app_id}', [NiraController::class,'storeNiraDetails']);
 
 });
 //Route::get('/checkMtToken', [MoneyTapController::class,'checkTokenMT']);

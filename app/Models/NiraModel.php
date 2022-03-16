@@ -9,19 +9,19 @@ use App\Models\UpwardsAppModel;
 use App\Models\SmartList;
 use Exception;
 
-class MoneyTapModel extends Model
+class NiraModel extends Model
 {
     use HasFactory;
 
-    protected $table = "money_tap";
-    protected $primaryKey = "moneytap_id";
-    public $timestamps = true;
+    protected $table = "nira";
+    protected $primaryKey = "nira_id";
+    public $timestamps = false;
 
     /**
      * used to save MoneyTap Data
      */
-    public function storeMoneyTapData($request,$appId){
-        try{
+    public function storeNiraData($request,$appId){
+       // try{
             $creditAppIdCount = CreditApp::where('creditapp_uuid',$appId)->count();
 
             if($creditAppIdCount == 0){
@@ -31,48 +31,39 @@ class MoneyTapModel extends Model
                 ],400);
             }
 
-            $moneyTapUpdateData = MoneyTapModel::where('creditapp_uid',$appId)->first();
+            $niraUpdateData = NiraModel::where('creditapp_uid',$appId)->first();
 
-            if(empty($moneyTapUpdateData)){
+            if(empty($niraUpdateData)){
                 return Response([
                     'status' => 'fail',
                     'message' => 'No Applied loan exist'
                 ],400);
             }
-            $moneyTapUpdateData->gender = $request['gender'];
-            $moneyTapUpdateData->income_mode = $request['income_mode'];
-            $moneyTapUpdateData->bank_account_holder_name = $request['bank_account_holder_name'];
-            $moneyTapUpdateData->bank_ifsc_code = $request['bank_ifsc_code'];
-            $moneyTapUpdateData->marital_status = $request['marital_status'];
-            $moneyTapUpdateData->office_email = $request['office_email'];
-            $moneyTapUpdateData->company_name = $request['company_name'];
-            $moneyTapUpdateData->company_type = $request['company_type'];
-            $moneyTapUpdateData->office_address = $request['office_address'];
-            $moneyTapUpdateData->residence_type = $request['residence_type'];
-            $moneyTapUpdateData->current_city_duration = $request['current_city_duration'];
-            $moneyTapUpdateData->current_home_address_duration = $request['current_home_address_duration'];
-            $moneyTapUpdateData->total_work_experience = $request['total_work_experience'];
-            $moneyTapUpdateData->current_work_experience_in_org = $request['current_work_experience_in_org'];
-            $statusOnOff = ExternalConnectorsModel::externalConnects("CHECKMTLEAD");
 
-            if($statusOnOff == 1){
-                $lenderCustomerId = $this->createLeadwithMoneyTap($moneyTapUpdateData,$appId);
-                $moneyTapUpdateData->lender_customer_id = $lenderCustomerId ?? 0;
-            }else{
-                $moneyTapUpdateData->lender_customer_id = 0;
-            }
-            $mtIframeUrl = config('constants.mtIframeUrl');
-            if($moneyTapUpdateData->save()){
-                $mvstatusOnOff = ExternalConnectorsModel::externalConnects("MONEYTAPLAPTOSF");
-                if($mvstatusOnOff == 1){
-                    $moneyTapSFDC = $this->buildArrayForMoneyTapToSFDC($moneyTapUpdateData);
-                    $casheAppModelObj = new CasheAppModel();
-                    $casheAppModelObj->storeAdditionalDataInSFDC($moneyTapSFDC);
-                }
+            $niraUpdateData->gender = $request['gender'];
+            $niraUpdateData->marital_status = $request['maritalStatus'];
+            $niraUpdateData->company_name = $request['organizationName'];
+            $niraUpdateData->total_work_experience = $request['experience'];
+
+			$niraUpdateData->existing_total_emi_amount = $request['existingTotalEmiAmount'];
+			$niraUpdateData->designation = $request['designation'];
+			$niraUpdateData->home_town = $request['hometown'];
+			$niraUpdateData->salary_mode = $request['incomeMode'];
+			$niraUpdateData->job_sector = $request['jobSector'];
+			$niraUpdateData->work_status = $request['workStatus'];
+
+            $lenderCustomerId = 0; // $this->createLeadwithNira($niraUpdateData,$appId);
+
+            $niraUpdateData->lender_customer_id = $lenderCustomerId ?? 0;
+            $niraIframeUrl = config('constants.niraIframeUrl');
+            if($niraUpdateData->save()){
+                //$moneyTapSFDC = $this->buildArrayForMoneyTapToSFDC($niraUpdateData);
+                //$casheAppModelObj = new CasheAppModel();
+				//$casheAppModelObj->storeAdditionalDataInSFDC($moneyTapSFDC);
                 return Response([
                     'status' => 'true',
                     'message' => 'saved data successfully!',
-                    'moneyTapURL' => $mtIframeUrl
+                    'niraIframeUrl' => $niraIframeUrl
                 ],200);
             }else{
                 return Response([
@@ -80,7 +71,7 @@ class MoneyTapModel extends Model
                     'message' => 'Something went wrong'
                 ],400);
             }
-        } catch (QueryException $e) {
+        /*}  catch (QueryException $e) {
             $code = $e->getCode();
             $message = $e->getMessage();
             ErrorLogModel::LogError($status = 500, $code, $message,$appId);
@@ -92,7 +83,7 @@ class MoneyTapModel extends Model
             ErrorLogModel::LogError($status = 500, $code, $message,$appId);
             $errolog = new ErrorLogModel();
             return $errolog->genericMsg();
-        }
+        } */
     }
 
     /**
@@ -149,13 +140,12 @@ class MoneyTapModel extends Model
     /**
      * Function used to create a lead with MoneyTap
      */
-    public function createLeadwithMoneyTap($moneyTapData,$appId){
+    public function createLeadwithNira($niraData,$appId){
         try{
             $creditAppData = CreditApp::where("creditapp_uuid",$appId)->first();
 
-            $token = $this->getMoneyTapToken();
-            $moneyTapBaseApiUrl = config('constants.moneyTapApiBaseUrl');
-            $url = $moneyTapBaseApiUrl."/v3/partner/buildprofile";
+            $moneyTapBaseApiUrl = config('constants.niraApiBaseUrl');
+            $url = $moneyTapBaseApiUrl."/createapplication";
             $jobTypeFromSmartList = SmartList::getFieldDescription($creditAppData["employment_status_code"]);
             if($jobTypeFromSmartList == "Wrkr"){
                 $jobType = "SALARIED";
@@ -169,36 +159,27 @@ class MoneyTapModel extends Model
                 $jobType = "RETIRED";
             }
             $payload = array(
-                    "name" => $creditAppData["first_name"]." ".$creditAppData["last_name"],
-                    "phone" => $creditAppData["mobile_phone_number"],
-                    "emailId" => $creditAppData["email"],
-                    "panNumber" => $creditAppData["tin"],
-                    "dateOfBirth" => $creditAppData["birth_date"],
-                    "incomeInfo" => array(
-                        "declared" => $creditAppData["monthly_income"],
-                        "mode" => SmartList::getFieldDescription($moneyTapData->income_mode),
-                        "bankIfscPrefixes" => array(substr($moneyTapData->bank_ifsc_code, 0, 4))
-                    ),
-                    "companyType"=> SmartList::getFieldDescription($moneyTapData->company_type),
-                    "jobType" => $jobType,
-                    "gender" => SmartList::getFieldDescription($moneyTapData->gender),
-                    "residenceType"=> SmartList::getFieldDescription($moneyTapData->residence_type),
-                    "totalWorkExperienceInMonths"=> intval($moneyTapData->total_work_experience),
-                    "currentWorkExperienceInMonths"=> intval($moneyTapData->current_work_experience_in_org),
-                    "currentCityDurationInMonths"=> intval($moneyTapData->current_city_duration),
-                    "currentHomeAddressDurationInMonths"=> intval($moneyTapData->current_home_address_duration),
-                    "maritalStatus"=> SmartList::getFieldDescription($moneyTapData->marital_status),
-                    "officeEmail"=>  $moneyTapData->office_email,
-                    "companyName"=>  $moneyTapData->company_name,
-                    "employmentType"=>  "FULL_TIME",
-                    "homeAddress"=> array(
-                        "addressLine1"=> $creditAppData["address1"]." ".$creditAppData["address2"],
-                        "pincode"=> $creditAppData["postal_code"]
-                    ),
-                    "officeAddress" => array(
-                        "addressLine1"=> $moneyTapData->office_address,
-                        "pincode"=> $creditAppData["postal_code"]
-                    )
+                    "uuid" =>  $appId,
+                    "partnerIdentifier" => 'LOAN2596',
+                    "dateofBirth" => $creditAppData["first_name"]." ".$creditAppData["last_name"],
+					"gender" => SmartList::getFieldDescription($niraData->gender),
+					"maritalStatus"=> SmartList::getFieldDescription($niraData->marital_status),
+					"organizationName"=>  $niraData->company_name,
+					"employmentType"=>  "FULL_TIME",
+					"experienceInMonths"=> intval($niraData->total_work_experience),
+					"existingTotalEMIAmount"=> intval($niraData->total_work_experience),
+                    "firstName" => $creditAppData["first_name"],
+                    "lastName" => $creditAppData["last_name"],
+					"personalEmailId" => $creditAppData["email"],
+                    "mobileNo" => $creditAppData["mobile_phone_number"],
+                    "designation" => $creditAppData["designation"],
+                    "pincode"=> $creditAppData["postal_code"],
+					"addressLine1"=> $niraData->office_address,
+					"addressLine2"=> $niraData->office_address,
+					"hometown"=> $niraData->homeTown,
+					"salaryMode"=> $niraData->salaryMode,
+					"jobSector"=> $niraData->jobSector,
+					"workStatus"=> $niraData->workStatus
             );
 
             $headersArray = array(
@@ -213,11 +194,11 @@ class MoneyTapModel extends Model
                     if(isset($response["customerId"])){
                         return $response["customerId"];
                     }else{
-                        ErrorLogModel::LogError(200, 200, "MoneyTap=".json_encode($response));
+                        ErrorLogModel::LogError(200, 200, "Nira=".json_encode($response));
                         return 0;
                     }
             }else{
-                $message = "Unable to create lead for MoneyTap service";
+                $message = "Unable to create lead for Nira service";
                 ErrorLogModel::LogError(400, 400, $message);
             }
        } catch (QueryException $e) {
@@ -255,7 +236,7 @@ class MoneyTapModel extends Model
             if(!empty($response)){
                     ErrorLogModel::LogError(200, 200, "MoneyTap Lead Status => ".json_encode($response));
                     $lapStatus = OfferStatusModel::getLapStatus("MoneyTap",$response["finalApprovalStatus"]);
-                    return $lapStatus;
+                    return $lapStatus ?? "";
             }else{
                 $message = "Unable to get status of customer lead for MoneyTap service";
                 ErrorLogModel::LogError(400, 400, $message);
@@ -276,24 +257,24 @@ class MoneyTapModel extends Model
 	{
         $moneyTapSFDC = array();
 		$moneyTapSFDC['Id'] = $moneyTapUpdateData->creditapp_uid;
-		$moneyTapSFDC['Gender'] = SmartList::getFieldLongDescription($moneyTapUpdateData->gender);
+		$moneyTapSFDC['Gender'] = SmartList::getFieldDescription($moneyTapUpdateData->gender);
 		$moneyTapSFDC['LenderName'] = $moneyTapUpdateData->lender_name;
-		$moneyTapSFDC['IncomeMode'] = SmartList::getFieldLongDescription($moneyTapUpdateData->income_mode);
-		$moneyTapSFDC['BankAccountHolderFullName'] = $moneyTapUpdateData->bank_account_holder_name;
-        $moneyTapSFDC['IFSC'] = $moneyTapUpdateData->bank_ifsc_code;
-        $moneyTapSFDC['MaritalStatus'] = SmartList::getFieldLongDescription($moneyTapUpdateData->marital_status);
+		$moneyTapSFDC['IncodeMode'] = SmartList::getFieldDescription($moneyTapUpdateData->income_mode);
+		$moneyTapSFDC['BankAccountHolderName'] = $moneyTapUpdateData->bank_account_holder_name;
+        $moneyTapSFDC['BankIfscCode'] = $moneyTapUpdateData->bank_ifsc_code;
+        $moneyTapSFDC['MaritalStatus'] = SmartList::getFieldDescription($moneyTapUpdateData->marital_status);
         $moneyTapSFDC['OfficeEmail'] = $moneyTapUpdateData->office_email;
-        $moneyTapSFDC['Company'] = $moneyTapUpdateData->company_name;
-        $moneyTapSFDC['CompanyType'] = SmartList::getFieldLongDescription($moneyTapUpdateData->company_type);
+        $moneyTapSFDC['CompanyName'] = $moneyTapUpdateData->company_name;
+        $moneyTapSFDC['CompanyType'] = $moneyTapUpdateData->company_type;
         $moneyTapSFDC['OfficeAddress'] = $moneyTapUpdateData->office_address;
-        $moneyTapSFDC['ResidencyType'] = SmartList::getFieldLongDescription($moneyTapUpdateData->residence_type);
+        $moneyTapSFDC['ResidenceType'] = SmartList::getFieldDescription($moneyTapUpdateData->residence_type);
         $moneyTapSFDC['CurrentCityDuration'] = $moneyTapUpdateData->current_city_duration;
         $moneyTapSFDC['CurrentHomeAddressDuration'] = $moneyTapUpdateData->current_home_address_duration;
         $moneyTapSFDC['TotalWorkExperience'] = $moneyTapUpdateData->total_work_experience;
         $moneyTapSFDC['CurrentWorkExperienceInOrg'] = $moneyTapUpdateData->current_work_experience_in_org;
         $moneyTapSFDC['Created'] = $moneyTapUpdateData->created_at;
 		$moneyTapSFDC['MisStatus'] = $moneyTapUpdateData->mis_status;
-		$moneyTapSFDC['LenderSystemId'] = strval($moneyTapUpdateData->lender_customer_id);
+		$moneyTapSFDC['LenderCustomerId'] = $moneyTapUpdateData->lender_customer_id;
         $moneyTapSFDC['SelectedOffer']['EMI'] = $moneyTapUpdateData->emi;
 		$moneyTapSFDC['SelectedOffer']['Amount'] = $moneyTapUpdateData->amount;
 		$moneyTapSFDC['SelectedOffer']['TermsMonth'] = $moneyTapUpdateData->term_months;
